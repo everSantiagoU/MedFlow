@@ -40,7 +40,7 @@ class CalendarioServiceTest {
     private CitaDAO citaRepository;
 
     @Mock
-    private DoctorService doctorService;
+    private ObtenerDoctor obtenerDoctor;
 
     @InjectMocks
     private CalendarioService calendarioService;
@@ -54,7 +54,7 @@ class CalendarioServiceTest {
                 LocalDateTime.of(2026, 5, 10, 8, 0),
                 LocalDateTime.of(2026, 5, 10, 9, 0));
 
-        when(doctorService.buscarEntidad(1)).thenReturn(doctorBase());
+        when(obtenerDoctor.buscarEntidad(1)).thenReturn(doctorBase());
         when(citaRepository.buscarPorDoctorYRango(1, desde, hasta)).thenReturn(List.of(cita));
         when(eventoCalendarioRepository.buscarPorDoctorYRango(1, desde, hasta)).thenReturn(List.of(evento));
 
@@ -80,7 +80,7 @@ class CalendarioServiceTest {
                 inicio,
                 fin);
 
-        when(doctorService.buscarEntidad(1)).thenReturn(doctorBase());
+        when(obtenerDoctor.buscarEntidad(1)).thenReturn(doctorBase());
         when(eventoCalendarioRepository.existeCruceEvento(1, inicio, fin)).thenReturn(false);
         when(citaRepository.buscarCitasActivasParaCruceCalendario(1, inicio.minusDays(1), fin)).thenReturn(List.of());
         when(eventoCalendarioRepository.save(any(EventoCalendario.class))).thenAnswer(invocation -> {
@@ -115,7 +115,7 @@ class CalendarioServiceTest {
                 () -> calendarioService.crearEvento(request));
 
         assertEquals("La fecha y hora de fin debe ser posterior al inicio", exception.getMessage());
-        verifyNoInteractions(doctorService, eventoCalendarioRepository, citaRepository);
+        verifyNoInteractions(obtenerDoctor, eventoCalendarioRepository, citaRepository);
     }
 
     @Test
@@ -124,7 +124,7 @@ class CalendarioServiceTest {
         LocalDateTime fin = LocalDateTime.of(2026, 5, 10, 15, 0);
         EventoCalendarioRequest request = requestEvento(inicio, fin);
 
-        when(doctorService.buscarEntidad(1)).thenReturn(doctorBase());
+        when(obtenerDoctor.buscarEntidad(1)).thenReturn(doctorBase());
         when(eventoCalendarioRepository.existeCruceEvento(1, inicio, fin)).thenReturn(true);
 
         ConflictoException exception = assertThrows(
@@ -143,7 +143,7 @@ class CalendarioServiceTest {
         EventoCalendarioRequest request = requestEvento(inicio, fin);
         Cita cita = citaBase(LocalDateTime.of(2026, 5, 10, 14, 30), 30);
 
-        when(doctorService.buscarEntidad(1)).thenReturn(doctorBase());
+        when(obtenerDoctor.buscarEntidad(1)).thenReturn(doctorBase());
         when(eventoCalendarioRepository.existeCruceEvento(1, inicio, fin)).thenReturn(false);
         when(citaRepository.buscarCitasActivasParaCruceCalendario(1, inicio.minusDays(1), fin)).thenReturn(List.of(cita));
 

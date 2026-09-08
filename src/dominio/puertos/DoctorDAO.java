@@ -7,21 +7,21 @@ import com.uam.medflow.dominio.modelo.Doctor;
 
 public interface DoctorDAO {
 
-    Optional<Doctor> findById(Integer id);
+    Optional<Doctor> porId(Integer id);
 
-    Doctor save(Doctor doctor);
+    Doctor guardar(Doctor doctor);
 
-    void delete(Doctor doctor);
+    void eliminar(Doctor doctor);
 
-    boolean existsByRegistroMedicoIgnoreCase(String registroMedico);
+    boolean existePorRegistroMedico(String registroMedico);
 
-    boolean existsByEmailIgnoreCase(String email);
+    boolean existePorEmail(String email);
 
-    boolean existsByRegistroMedicoIgnoreCaseAndIdNot(String registroMedico, Integer id);
+    boolean existePorRegistroMedicoDistintoDeId(String registroMedico, Integer id);
 
-    boolean existsByEmailIgnoreCaseAndIdNot(String email, Integer id);
+    boolean existePorEmailDistintoDeId(String email, Integer id);
 
-    List<Doctor> findAllByOrderByNombreCompletoAsc();
+    List<Doctor> listarOrdenadosPorNombre();
 
     List<Doctor> buscar(String termino);
 }
