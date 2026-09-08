@@ -26,17 +26,17 @@ public class CitaService {
 
     private final CitaDAO citaRepository;
     private final PacienteService pacienteService;
-    private final DoctorService doctorService;
+    private final ObtenerDoctor obtenerDoctor;
     private final ProcedimientoService procedimientoService;
 
     public CitaService(
             CitaDAO citaRepository,
             PacienteService pacienteService,
-            DoctorService doctorService,
+            ObtenerDoctor obtenerDoctor,
             ProcedimientoService procedimientoService) {
         this.citaRepository = citaRepository;
         this.pacienteService = pacienteService;
-        this.doctorService = doctorService;
+        this.obtenerDoctor = obtenerDoctor;
         this.procedimientoService = procedimientoService;
     }
 
@@ -58,7 +58,7 @@ public class CitaService {
         validarDisponibilidad(request, null);
 
         Paciente paciente = pacienteService.buscarEntidad(request.pacienteId());
-        Doctor doctor = doctorService.buscarEntidad(request.doctorId());
+        Doctor doctor = obtenerDoctor.buscarEntidad(request.doctorId());
         Procedimiento procedimiento = procedimientoService.buscarEntidad(request.procedimientoId());
 
         Cita cita = new Cita();
@@ -77,7 +77,7 @@ public class CitaService {
         validarDisponibilidad(request, id);
 
         Paciente paciente = pacienteService.buscarEntidad(request.pacienteId());
-        Doctor doctor = doctorService.buscarEntidad(request.doctorId());
+        Doctor doctor = obtenerDoctor.buscarEntidad(request.doctorId());
         Procedimiento procedimiento = procedimientoService.buscarEntidad(request.procedimientoId());
 
         cita.setPaciente(paciente);
@@ -102,7 +102,7 @@ public class CitaService {
 
     private void validarDisponibilidad(CitaRequest request, Integer citaId) {
         pacienteService.buscarEntidad(request.pacienteId());
-        doctorService.buscarEntidad(request.doctorId());
+        obtenerDoctor.buscarEntidad(request.doctorId());
         procedimientoService.buscarEntidad(request.procedimientoId());
 
         if (citaRepository.existeCruceDoctor(request.doctorId(), request.fechaHora(), citaId)) {

@@ -7,9 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.uam.medflow.dominio.modelo.Doctor;
-import com.uam.medflow.dominio.puertos.DoctorDAO;
 
-public interface DoctorRepository extends JpaRepository<Doctor, Integer>, DoctorDAO {
+public interface DoctorSpringDataRepository extends JpaRepository<Doctor, Integer> {
 
     boolean existsByRegistroMedicoIgnoreCase(String registroMedico);
 

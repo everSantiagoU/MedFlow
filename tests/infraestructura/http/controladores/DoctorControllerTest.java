@@ -9,14 +9,23 @@ import org.junit.jupiter.api.Test;
 import com.uam.medflow.aplicacion.dto.doctor.DoctorRequest;
 import com.uam.medflow.aplicacion.dto.doctor.DoctorResponse;
 import com.uam.medflow.aplicacion.dto.doctor.DoctorUpdateResponse;
-import com.uam.medflow.aplicacion.casosuso.DoctorService;
+import com.uam.medflow.aplicacion.casosuso.ActualizarDoctor;
+import com.uam.medflow.aplicacion.casosuso.EliminarDoctor;
+import com.uam.medflow.aplicacion.casosuso.ListarDoctores;
+import com.uam.medflow.aplicacion.casosuso.ObtenerDoctor;
+import com.uam.medflow.aplicacion.casosuso.RegistrarDoctor;
 
 class DoctorControllerTest {
 
     @Test
     void actualizarRetornaMensajeDeConfirmacion() {
-        DoctorService doctorService = mock(DoctorService.class);
-        DoctorController controller = new DoctorController(doctorService);
+        ActualizarDoctor actualizarDoctor = mock(ActualizarDoctor.class);
+        DoctorController controller = new DoctorController(
+                mock(ListarDoctores.class),
+                mock(ObtenerDoctor.class),
+                mock(RegistrarDoctor.class),
+                actualizarDoctor,
+                mock(EliminarDoctor.class));
         DoctorRequest request = new DoctorRequest(
                 "Dra. Laura Gomez",
                 "Medicina General",
@@ -29,7 +38,7 @@ class DoctorControllerTest {
                 "RM-001",
                 "laura.gomez@medflow.com");
 
-        when(doctorService.actualizar(1, request)).thenReturn(response);
+        when(actualizarDoctor.ejecutar(1, request)).thenReturn(response);
 
         DoctorUpdateResponse resultado = controller.actualizar(1, request);
 

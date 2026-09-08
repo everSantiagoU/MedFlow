@@ -17,7 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uam.medflow.aplicacion.dto.doctor.DoctorRequest;
 import com.uam.medflow.aplicacion.dto.doctor.DoctorResponse;
 import com.uam.medflow.aplicacion.dto.doctor.DoctorUpdateResponse;
-import com.uam.medflow.aplicacion.casosuso.DoctorService;
+import com.uam.medflow.aplicacion.casosuso.ActualizarDoctor;
+import com.uam.medflow.aplicacion.casosuso.EliminarDoctor;
+import com.uam.medflow.aplicacion.casosuso.ListarDoctores;
+import com.uam.medflow.aplicacion.casosuso.ObtenerDoctor;
+import com.uam.medflow.aplicacion.casosuso.RegistrarDoctor;
 
 import jakarta.validation.Valid;
 
@@ -25,37 +29,50 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/doctores")
 public class DoctorController {
 
-    private final DoctorService doctorService;
+    private final ListarDoctores listarDoctores;
+    private final ObtenerDoctor obtenerDoctor;
+    private final RegistrarDoctor registrarDoctor;
+    private final ActualizarDoctor actualizarDoctor;
+    private final EliminarDoctor eliminarDoctor;
 
-    public DoctorController(DoctorService doctorService) {
-        this.doctorService = doctorService;
+    public DoctorController(
+            ListarDoctores listarDoctores,
+            ObtenerDoctor obtenerDoctor,
+            RegistrarDoctor registrarDoctor,
+            ActualizarDoctor actualizarDoctor,
+            EliminarDoctor eliminarDoctor) {
+        this.listarDoctores = listarDoctores;
+        this.obtenerDoctor = obtenerDoctor;
+        this.registrarDoctor = registrarDoctor;
+        this.actualizarDoctor = actualizarDoctor;
+        this.eliminarDoctor = eliminarDoctor;
     }
 
     @GetMapping
     public List<DoctorResponse> listar(@RequestParam(required = false) String busqueda) {
-        return doctorService.listar(busqueda);
+        return listarDoctores.ejecutar(busqueda);
     }
 
     @GetMapping("/{id}")
     public DoctorResponse obtenerPorId(@PathVariable Integer id) {
-        return doctorService.obtenerPorId(id);
+        return obtenerDoctor.ejecutar(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DoctorResponse crear(@Valid @RequestBody DoctorRequest request) {
-        return doctorService.crear(request);
+        return registrarDoctor.ejecutar(request);
     }
 
     @PutMapping("/{id}")
     public DoctorUpdateResponse actualizar(@PathVariable Integer id, @Valid @RequestBody DoctorRequest request) {
-        DoctorResponse doctorActualizado = doctorService.actualizar(id, request);
+        DoctorResponse doctorActualizado = actualizarDoctor.ejecutar(id, request);
         return new DoctorUpdateResponse("Doctor actualizado correctamente", doctorActualizado);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Integer id) {
-        doctorService.eliminar(id);
+        eliminarDoctor.ejecutar(id);
     }
 }

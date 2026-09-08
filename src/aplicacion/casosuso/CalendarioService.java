@@ -26,21 +26,21 @@ public class CalendarioService {
 
     private final EventoCalendarioDAO eventoCalendarioRepository;
     private final CitaDAO citaRepository;
-    private final DoctorService doctorService;
+    private final ObtenerDoctor obtenerDoctor;
 
     public CalendarioService(
             EventoCalendarioDAO eventoCalendarioRepository,
             CitaDAO citaRepository,
-            DoctorService doctorService) {
+            ObtenerDoctor obtenerDoctor) {
         this.eventoCalendarioRepository = eventoCalendarioRepository;
         this.citaRepository = citaRepository;
-        this.doctorService = doctorService;
+        this.obtenerDoctor = obtenerDoctor;
     }
 
     @Transactional(readOnly = true)
     public List<EventoCalendarioResponse> verCalendario(Integer doctorId, LocalDateTime desde, LocalDateTime hasta) {
         validarRango(desde, hasta);
-        doctorService.buscarEntidad(doctorId);
+        obtenerDoctor.buscarEntidad(doctorId);
 
         List<EventoCalendarioResponse> citas = citaRepository.buscarPorDoctorYRango(doctorId, desde, hasta)
                 .stream()
@@ -60,7 +60,7 @@ public class CalendarioService {
     public EventoCalendarioResponse crearEvento(EventoCalendarioRequest request) {
         validarRango(request.inicio(), request.fin());
 
-        Doctor doctor = doctorService.buscarEntidad(request.doctorId());
+        Doctor doctor = obtenerDoctor.buscarEntidad(request.doctorId());
 
         if (eventoCalendarioRepository.existeCruceEvento(request.doctorId(), request.inicio(), request.fin())) {
             throw new ConflictoException("El doctor ya tiene un evento programado en ese rango de tiempo");
