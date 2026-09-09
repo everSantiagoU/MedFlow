@@ -4,7 +4,7 @@ import { aPaciente } from './conversoresPrisma.js'
 import type { ClientePrisma } from './prisma.js'
 
 export class PacienteDAOPrisma implements PacienteDAO {
-  constructor(private readonly prisma: ClientePrisma) {}
+  constructor(private readonly prisma: Pick<ClientePrisma, 'paciente'>) {}
   async porId(id: number) { const fila = await this.prisma.paciente.findUnique({ where: { id } }); return fila && aPaciente(fila) }
   async guardar(paciente: PacienteNuevo | Paciente) {
     const data = { nombreCompleto: paciente.nombreCompleto, documento: paciente.documento, telefono: paciente.telefono, email: paciente.email, direccion: paciente.direccion }

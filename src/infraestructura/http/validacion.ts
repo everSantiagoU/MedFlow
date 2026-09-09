@@ -6,6 +6,12 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const objeto = (valor: unknown): Record<string, unknown> =>
   typeof valor === 'object' && valor !== null && !Array.isArray(valor) ? valor as Record<string, unknown> : {}
 
+function objetoNormalizado(valor: unknown): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(objeto(valor)).map(([campo, dato]) =>
+    [campo, typeof dato === 'string' ? dato.trim() : dato],
+  ))
+}
+
 function textoRequerido(d: Record<string, unknown>, campo: string, mensaje: string, max: number, mensajeMax: string, errores: string[]) {
   const valor = d[campo]
   if (typeof valor !== 'string' || !valor.trim()) errores.push(`${campo}: ${mensaje}`)
@@ -31,7 +37,7 @@ export function validarLogin(cuerpo: unknown): { email: string; password: string
 }
 
 export function validarDoctor(cuerpo: unknown): DatosDoctor {
-  const d = objeto(cuerpo), errores: string[] = []
+  const d = objetoNormalizado(cuerpo), errores: string[] = []
   const nombreCompleto = textoRequerido(d, 'nombreCompleto', 'El nombre completo es obligatorio', 150, 'El nombre completo no puede superar los 150 caracteres', errores)
   const especialidad = textoRequerido(d, 'especialidad', 'La especialidad es obligatoria', 100, 'La especialidad no puede superar los 100 caracteres', errores)
   const registroMedico = textoRequerido(d, 'registroMedico', 'El registro medico es obligatorio', 80, 'El registro medico no puede superar los 80 caracteres', errores)
@@ -41,7 +47,7 @@ export function validarDoctor(cuerpo: unknown): DatosDoctor {
 }
 
 export function validarPaciente(cuerpo: unknown): DatosPaciente {
-  const d = objeto(cuerpo), errores: string[] = []
+  const d = objetoNormalizado(cuerpo), errores: string[] = []
   const nombreCompleto = textoRequerido(d, 'nombreCompleto', 'El nombre completo es obligatorio', 150, 'El nombre completo no puede superar los 150 caracteres', errores)
   const documento = textoRequerido(d, 'documento', 'El documento es obligatorio', 30, 'El documento no puede superar los 30 caracteres', errores)
   const telefono = textoRequerido(d, 'telefono', 'El telefono es obligatorio', 30, 'El telefono no puede superar los 30 caracteres', errores)
@@ -117,7 +123,11 @@ export function validarHistoria(cuerpo: unknown): DatosHistoriaClinica {
 export function validarId(valor: string | string[] | undefined): number {
   const texto = typeof valor === 'string' ? valor : ''
   if (!/^-?\d+$/.test(texto)) throw new SolicitudInvalida(['id: debe ser un numero entero'])
-  return Number(texto)
+  const id = Number(texto)
+  if (!Number.isSafeInteger(id) || id < -2147483648 || id > 2147483647) {
+    throw new SolicitudInvalida(['id: fuera del rango permitido'])
+  }
+  return id
 }
 
 export function validarFechaConsulta(valor: unknown): string | undefined {

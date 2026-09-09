@@ -52,17 +52,19 @@ const procedimientos = new ProcedimientoDAOPrisma(prisma)
 const citas = new CitaDAOPrisma(prisma)
 const eventos = new EventoCalendarioDAOPrisma(prisma)
 const historias = new HistoriaClinicaDAOPrisma(prisma)
+const obtenerDoctor = new ObtenerDoctor(doctores)
+const obtenerPaciente = new ObtenerPaciente(pacientes)
 const tokens = new TokensJwt(requerido('JWT_SECRET', 'medflow-dev-secret-key-change-before-production-2026'), Number(process.env['JWT_EXPIRATION_MS'] ?? 86_400_000))
 
 const deps = {
   tokens,
   iniciarSesion: new IniciarSesion(usuarios, new ClavesBcrypt(), tokens),
-  listarDoctores: new ListarDoctores(doctores), obtenerDoctor: new ObtenerDoctor(doctores), registrarDoctor: new RegistrarDoctor(doctores), actualizarDoctor: new ActualizarDoctor(doctores), eliminarDoctor: new EliminarDoctor(doctores),
-  listarPacientes: new ListarPacientes(pacientes), obtenerPaciente: new ObtenerPaciente(pacientes), registrarPaciente: new RegistrarPaciente(pacientes), actualizarPaciente: new ActualizarPaciente(pacientes), eliminarPaciente: new EliminarPaciente(pacientes),
+  listarDoctores: new ListarDoctores(doctores), obtenerDoctor, registrarDoctor: new RegistrarDoctor(doctores), actualizarDoctor: new ActualizarDoctor(doctores, obtenerDoctor), eliminarDoctor: new EliminarDoctor(doctores, obtenerDoctor),
+  listarPacientes: new ListarPacientes(pacientes), obtenerPaciente, registrarPaciente: new RegistrarPaciente(pacientes), actualizarPaciente: new ActualizarPaciente(pacientes, obtenerPaciente), eliminarPaciente: new EliminarPaciente(pacientes, obtenerPaciente),
   listarProcedimientos: new ListarProcedimientos(procedimientos), obtenerProcedimiento: new ObtenerProcedimiento(procedimientos), registrarProcedimiento: new RegistrarProcedimiento(procedimientos), actualizarProcedimiento: new ActualizarProcedimiento(procedimientos), eliminarProcedimiento: new EliminarProcedimiento(procedimientos),
-  listarCitas: new ListarCitas(citas), obtenerCita: new ObtenerCita(citas), registrarCita: new RegistrarCita(citas, pacientes, doctores, procedimientos), actualizarCita: new ActualizarCita(citas, pacientes, doctores, procedimientos), cancelarCita: new CancelarCita(citas),
+  listarCitas: new ListarCitas(citas), obtenerCita: new ObtenerCita(citas), registrarCita: new RegistrarCita(citas, obtenerPaciente, obtenerDoctor, procedimientos), actualizarCita: new ActualizarCita(citas, obtenerPaciente, obtenerDoctor, procedimientos), cancelarCita: new CancelarCita(citas),
   consultarCalendario: new ConsultarCalendario(eventos, citas, doctores), registrarEventoCalendario: new RegistrarEventoCalendario(eventos, citas, doctores),
-  listarHistorias: new ListarHistoriasClinicas(historias), obtenerHistoria: new ObtenerHistoriaClinica(historias), listarHistoriasPorPaciente: new ListarHistoriasPorPaciente(historias, pacientes), registrarHistoria: new RegistrarHistoriaClinica(historias, citas), actualizarHistoria: new ActualizarHistoriaClinica(historias),
+  listarHistorias: new ListarHistoriasClinicas(historias), obtenerHistoria: new ObtenerHistoriaClinica(historias), listarHistoriasPorPaciente: new ListarHistoriasPorPaciente(historias, obtenerPaciente), registrarHistoria: new RegistrarHistoriaClinica(historias, citas), actualizarHistoria: new ActualizarHistoriaClinica(historias),
 }
 
 const puerto = Number(process.env['PORT'] ?? 3000)

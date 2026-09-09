@@ -1,4 +1,6 @@
-import type { CitaDAO, DoctorDAO, PacienteDAO, ProcedimientoDAO } from '../../dominio/puertos/index.js'
+import type { ObtenerDoctor } from './ObtenerDoctor.js'
+import type { ObtenerPaciente } from './ObtenerPaciente.js'
+import type { CitaDAO, ProcedimientoDAO } from '../../dominio/puertos/index.js'
 import { Conflicto, RecursoNoEncontrado } from '../errores.js'
 import type { DatosCita } from './tipos.js'
 
@@ -13,16 +15,12 @@ export function normalizarEstado(estado?: string): string {
 
 export async function validarRelacionesCita(
   datos: DatosCita,
-  pacientes: PacienteDAO,
-  doctores: DoctorDAO,
+  pacientes: ObtenerPaciente,
+  doctores: ObtenerDoctor,
   procedimientos: ProcedimientoDAO,
 ) {
-  if (!(await pacientes.porId(datos.pacienteId))) {
-    throw new RecursoNoEncontrado(`Paciente no encontrado con id ${datos.pacienteId}`)
-  }
-  if (!(await doctores.porId(datos.doctorId))) {
-    throw new RecursoNoEncontrado(`Doctor no encontrado con id ${datos.doctorId}`)
-  }
+  await pacientes.buscarEntidad(datos.pacienteId)
+  await doctores.buscarEntidad(datos.doctorId)
   if (!(await procedimientos.porId(datos.procedimientoId))) {
     throw new RecursoNoEncontrado(`Procedimiento no encontrado con id ${datos.procedimientoId}`)
   }

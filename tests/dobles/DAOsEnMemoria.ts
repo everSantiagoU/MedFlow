@@ -1,11 +1,11 @@
 import type { Cita, CitaDetalle, CitaNueva } from '../../src/dominio/modelo/Cita.js'
-import type { Doctor, DoctorNuevo } from '../../src/dominio/modelo/Doctor.js'
+import type { DoctorDAOEnMemoria } from './DoctorDAOEnMemoria.js'
 import type { EventoCalendarioDetalle, EventoCalendarioNuevo } from '../../src/dominio/modelo/EventoCalendario.js'
 import type { HistoriaClinicaDetalle, HistoriaClinicaNueva } from '../../src/dominio/modelo/HistoriaClinica.js'
-import type { Paciente, PacienteNuevo } from '../../src/dominio/modelo/Paciente.js'
+import type { PacienteDAOEnMemoria } from './PacienteDAOEnMemoria.js'
 import type { Procedimiento, ProcedimientoNuevo } from '../../src/dominio/modelo/Procedimiento.js'
 import type { Rol, Usuario } from '../../src/dominio/modelo/Usuario.js'
-import type { CitaDAO, DoctorDAO, EventoCalendarioDAO, HistoriaClinicaDAO, PacienteDAO, ProcedimientoDAO, ServicioClaves, UsuarioDAO } from '../../src/dominio/puertos/index.js'
+import type { CitaDAO, EventoCalendarioDAO, HistoriaClinicaDAO, ProcedimientoDAO, ServicioClaves, UsuarioDAO } from '../../src/dominio/puertos/index.js'
 
 const contiene = (valor: string, termino: string) => valor.toLowerCase().includes(termino.toLowerCase())
 
@@ -21,38 +21,6 @@ export class UsuarioDAOEnMemoria implements UsuarioDAO {
 
 export class ClavesFalsas implements ServicioClaves {
   async coincide(clave: string, hash: string) { return hash === `hash:${clave}` }
-}
-
-export class DoctorDAOEnMemoria implements DoctorDAO {
-  constructor(readonly filas: Doctor[] = []) {}
-  async porId(id: number) { return this.filas.find(f => f.id === id) ?? null }
-  async guardar(valor: DoctorNuevo | Doctor) {
-    const fila = 'id' in valor ? { ...valor } : { ...valor, id: Math.max(0, ...this.filas.map(f => f.id)) + 1 }
-    const indice = this.filas.findIndex(f => f.id === fila.id)
-    if (indice >= 0) this.filas[indice] = fila; else this.filas.push(fila)
-    return fila
-  }
-  async eliminar(id: number) { this.filas.splice(this.filas.findIndex(f => f.id === id), 1) }
-  async existeRegistroMedico(valor: string, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.registroMedico.toLowerCase() === valor.toLowerCase()) }
-  async existeEmail(valor: string, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.email.toLowerCase() === valor.toLowerCase()) }
-  async listar(busqueda?: string) {
-    return this.filas.filter(f => !busqueda || [f.nombreCompleto, f.especialidad, f.registroMedico, f.email].some(v => contiene(v, busqueda))).sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto))
-  }
-}
-
-export class PacienteDAOEnMemoria implements PacienteDAO {
-  constructor(readonly filas: Paciente[] = []) {}
-  async porId(id: number) { return this.filas.find(f => f.id === id) ?? null }
-  async guardar(valor: PacienteNuevo | Paciente) {
-    const fila = 'id' in valor ? { ...valor } : { ...valor, id: Math.max(0, ...this.filas.map(f => f.id)) + 1 }
-    const indice = this.filas.findIndex(f => f.id === fila.id)
-    if (indice >= 0) this.filas[indice] = fila; else this.filas.push(fila)
-    return fila
-  }
-  async eliminar(id: number) { this.filas.splice(this.filas.findIndex(f => f.id === id), 1) }
-  async existeDocumento(valor: string, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.documento.toLowerCase() === valor.toLowerCase()) }
-  async existeEmail(valor: string, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.email.toLowerCase() === valor.toLowerCase()) }
-  async listar(busqueda?: string) { return this.filas.filter(f => !busqueda || Object.values(f).some(v => contiene(String(v), busqueda))).sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto)) }
 }
 
 export class ProcedimientoDAOEnMemoria implements ProcedimientoDAO {

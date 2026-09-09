@@ -109,7 +109,6 @@ model HistoriaClinica {
   @@map("historias_clinicas")
 }
 
-// Tablas heredadas presentes en clinica_db sin funcionalidad publica en MedFlow.
 model CalendarEvent {
   id          Int      @id @default(autoincrement())
   descripcion String?  @db.Text

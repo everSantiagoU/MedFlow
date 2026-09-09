@@ -1,4 +1,6 @@
-import type { CitaDAO, DoctorDAO, PacienteDAO, ProcedimientoDAO } from '../../dominio/puertos/index.js'
+import type { ObtenerDoctor } from './ObtenerDoctor.js'
+import type { ObtenerPaciente } from './ObtenerPaciente.js'
+import type { CitaDAO, ProcedimientoDAO } from '../../dominio/puertos/index.js'
 import { aCitaDTO } from '../conversores.js'
 import { normalizarEstado, validarDisponibilidad, validarRelacionesCita } from './soporteCitas.js'
 import type { DatosCita } from './tipos.js'
@@ -6,8 +8,8 @@ import type { DatosCita } from './tipos.js'
 export class RegistrarCita {
   constructor(
     private readonly citas: CitaDAO,
-    private readonly pacientes: PacienteDAO,
-    private readonly doctores: DoctorDAO,
+    private readonly pacientes: ObtenerPaciente,
+    private readonly doctores: ObtenerDoctor,
     private readonly procedimientos: ProcedimientoDAO,
   ) {}
   async ejecutar(datos: DatosCita) {

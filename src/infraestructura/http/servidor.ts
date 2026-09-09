@@ -1,7 +1,7 @@
 import express, { Router } from 'express'
 import type { ErrorRequestHandler, Express } from 'express'
 import swaggerUi from 'swagger-ui-express'
-import { ErrorAplicacion } from '../../aplicacion/errores.js'
+import { Conflicto, CredencialesInvalidas, ErrorAplicacion, RecursoNoEncontrado, SolicitudInvalida } from '../../aplicacion/errores.js'
 import { traducirErrorPrisma } from '../persistencia/erroresPrisma.js'
 import { openapi } from './openapi.js'
 import { rutasAutenticacion } from './rutas/autenticacion.js'
@@ -17,7 +17,11 @@ import type { DependenciasHttp } from './rutas/tipos.js'
 const errores: ErrorRequestHandler = (error, _req, res, _next) => {
   const conocido = error instanceof ErrorAplicacion ? error : traducirErrorPrisma(error)
   if (conocido instanceof ErrorAplicacion) {
-    res.status(conocido.estadoHttp).json({ mensaje: conocido.message, errores: conocido.errores })
+    const estado = conocido instanceof RecursoNoEncontrado ? 404
+      : conocido instanceof Conflicto ? 409
+      : conocido instanceof CredencialesInvalidas ? 401
+      : conocido instanceof SolicitudInvalida ? 400 : 500
+    res.status(estado).json({ mensaje: conocido.message, errores: conocido.errores })
     return
   }
   if (error instanceof SyntaxError && 'body' in error) {

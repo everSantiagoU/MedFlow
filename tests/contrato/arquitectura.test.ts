@@ -18,8 +18,14 @@ describe('arquitectura hexagonal', () => {
     }
   })
 
-  it('main.ts es el unico punto de composicion de adaptadores concretos', () => {
-    const consumidores = archivos('src').filter(ruta => readFileSync(ruta, 'utf8').includes('new DoctorDAOPrisma'))
-    expect(consumidores).toEqual(['src/main.ts'])
+  it.each(['Doctor', 'Paciente'])('compone %s y sus adaptadores en main.ts', entidad => {
+    for (const constructor of [`${entidad}DAOPrisma`, `Obtener${entidad}`]) {
+      const consumidores = archivos('src').filter(ruta => readFileSync(ruta, 'utf8').includes(`new ${constructor}`))
+      expect(consumidores).toEqual(['src/main.ts'])
+    }
+  })
+
+  it('los errores de aplicacion no contienen codigos HTTP', () => {
+    expect(readFileSync('src/aplicacion/errores.ts', 'utf8')).not.toMatch(/estadoHttp|\b(?:400|401|404|409|500)\b/)
   })
 })
