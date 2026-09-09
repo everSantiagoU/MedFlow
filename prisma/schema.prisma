@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/infraestructura/persistencia/generado"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Rol {
+  ADMIN
+  MEDICO
+  PACIENTE
+}
+
+model Usuario {
+  id       Int    @id @default(autoincrement())
+  email    String @unique(map: "UKkfsp0s1tflm1cwlj8idhqsad0") @db.VarChar(120)
+  password String @db.VarChar(255)
+  rol      Rol
+
+  @@map("usuarios")
+}
+
+model Doctor {
+  id                Int                 @id @default(autoincrement())
+  email             String              @unique(map: "UKd73enkt3ggy3dlibgn86qs5ea") @db.VarChar(120)
+  especialidad      String              @db.VarChar(100)
+  nombreCompleto    String              @map("nombre_completo") @db.VarChar(150)
+  registroMedico    String              @unique(map: "UKrxi7ou0oc024hmqknfdof0cr5") @map("registro_medico") @db.VarChar(80)
+  calendarEvents    CalendarEvent[]     @ignore
+  citas             Cita[]
+  eventosCalendario EventoCalendario[]
+  historiasClinicas HistoriaClinica[]
+
+  @@map("doctores")
+}
+
+model Paciente {
+  id                Int                 @id @default(autoincrement())
+  direccion         String              @db.VarChar(200)
+  documento         String              @unique(map: "UKpmbbinegtxye4liqd61ionaau") @db.VarChar(30)
+  email             String              @unique(map: "UKa83ft0lfk8ltx47ve931qw2kq") @db.VarChar(120)
+  nombreCompleto    String              @map("nombre_completo") @db.VarChar(150)
+  telefono          String              @db.VarChar(30)
+  citas             Cita[]
+  historiasClinicas HistoriaClinica[]
+
+  @@map("pacientes")
+}
+
+model Procedimiento {
+  id              Int      @id @default(autoincrement())
+  duracionMinutos Int      @map("duracion_minutos")
+  nombre          String   @db.VarChar(120)
+  precio          Decimal  @db.Decimal(10, 2)
+  citas           Cita[]
+
+  @@map("procedimientos")
+}
+
+model Cita {
+  id                Int               @id @default(autoincrement())
+  estado            String            @db.VarChar(50)
+  fechaHora         DateTime          @map("fecha_hora") @db.DateTime(6)
+  doctorId          Int               @map("doctor_id")
+  pacienteId        Int               @map("paciente_id")
+  procedimientoId   Int               @map("procedimiento_id")
+  doctor            Doctor            @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKa0culq17omm7ln12kktrip4em")
+  paciente          Paciente          @relation(fields: [pacienteId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKnqrsxxcuysfcxiekvixm7h8r1")
+  procedimiento     Procedimiento     @relation(fields: [procedimientoId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKllkd41ffg9sk7hxbwnamrnfyg")
+  factura           Factura?          @ignore
+  historiaClinica   HistoriaClinica?
+
+  @@index([doctorId], map: "FKa0culq17omm7ln12kktrip4em")
+  @@index([pacienteId], map: "FKnqrsxxcuysfcxiekvixm7h8r1")
+  @@index([procedimientoId], map: "FKllkd41ffg9sk7hxbwnamrnfyg")
+  @@map("citas")
+}
+
+model EventoCalendario {
+  id          Int      @id @default(autoincrement())
+  descripcion String?  @db.Text
+  fin         DateTime @db.DateTime(6)
+  inicio      DateTime @db.DateTime(6)
+  titulo      String   @db.VarChar(150)
+  doctorId    Int      @map("doctor_id")
+  doctor      Doctor   @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_eventos_calendario_doctor")
+
+  @@index([doctorId], map: "idx_eventos_calendario_doctor")
+  @@map("eventos_calendario")
+}
+
+model HistoriaClinica {
+  id               Int      @id @default(autoincrement())
+  fechaRegistro    DateTime @map("fecha_registro") @db.DateTime(6)
+  observaciones    String   @db.Text
+  citaId           Int      @unique(map: "UK2v09fptijg4p3nws06297uol4") @map("cita_id")
+  doctorId         Int      @map("doctor_id")
+  pacienteId       Int      @map("paciente_id")
+  datosRelevantes  String   @map("datos_relevantes") @db.Text
+  diagnostico      String   @db.Text
+  cita             Cita     @relation(fields: [citaId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK575fsj4ihg5ptmjun1jwp7q6g")
+  doctor           Doctor   @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKg1khn522eg7918px2b46n8mh2")
+  paciente         Paciente @relation(fields: [pacienteId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKr14j0egr7g6kw0h3r2jb1ft55")
+
+  @@index([doctorId], map: "FKg1khn522eg7918px2b46n8mh2")
+  @@index([pacienteId], map: "FKr14j0egr7g6kw0h3r2jb1ft55")
+  @@map("historias_clinicas")
+}
+
+// Tablas heredadas presentes en clinica_db sin funcionalidad publica en MedFlow.
+model CalendarEvent {
+  id          Int      @id @default(autoincrement())
+  descripcion String?  @db.Text
+  fin         DateTime @db.DateTime(6)
+  inicio      DateTime @db.DateTime(6)
+  titulo      String   @db.VarChar(150)
+  doctorId    Int      @map("doctor_id")
+  doctor      Doctor   @relation(fields: [doctorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK11xlxjjoffpeel21ao5w8388g")
+
+  @@index([doctorId], map: "FK11xlxjjoffpeel21ao5w8388g")
+  @@ignore
+  @@map("calendar_events")
+}
+
+model Factura {
+  id           Int      @id @default(autoincrement())
+  estadoPago   String   @map("estado_pago") @db.VarChar(50)
+  fechaEmision DateTime @map("fecha_emision") @db.DateTime(6)
+  total        Decimal  @db.Decimal(10, 2)
+  citaId       Int      @unique(map: "UKibamxjwt2ca4vhe9401i2hfrb") @map("cita_id")
+  cita         Cita     @relation(fields: [citaId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKq9vi47c56fdqslypxnlj8l2f8")
+
+  @@ignore
+  @@map("facturas")
+}
