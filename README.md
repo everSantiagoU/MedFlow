@@ -1,228 +1,156 @@
 # MedFlow
 
-MedFlow es una aplicacion web para la gestion integral de un consultorio medico.
-El MVP actual cubre autenticacion, panel de control, pacientes, citas,
-calendario medico e historia clinica cronologica asociada a cada paciente.
+MedFlow es una aplicacion web para la gestion de un consultorio medico. El proyecto combina React y Vite con un backend Node.js, TypeScript, Express y Prisma, organizado con la misma arquitectura hexagonal de HelpDesk UAM.
 
-## Arquitectura
-
-Todo el codigo fuente vive bajo una sola raiz `src/`, organizada con una
-estructura hexagonal inspirada en el proyecto de referencia:
+## Estructura
 
 ```text
-src/
-├── MedflowApplication.java
-├── dominio/
-│   ├── modelo/
-│   ├── puertos/
-│   └── excepciones/
-├── aplicacion/
-│   ├── casosuso/
-│   └── dto/
-└── infraestructura/
-    ├── http/
-    ├── persistencia/
-    ├── seguridad/
-    ├── ui/
-    └── recursos/
-
-tests/
-├── aplicacion/
-├── arquitectura/
-├── infraestructura/
-└── resources/
+MedFlow/
+├── prisma/
+│   ├── schema.prisma
+│   ├── seed.ts
+│   └── referencia/schema-baseline.sql
+├── src/
+│   ├── dominio/
+│   │   ├── modelo/
+│   │   └── puertos/index.ts
+│   ├── aplicacion/
+│   │   ├── casos-uso/
+│   │   └── dto/
+│   ├── infraestructura/
+│   │   ├── http/
+│   │   ├── persistencia/
+│   │   ├── seguridad/
+│   │   └── ui/
+│   └── main.ts
+├── tests/
+│   ├── unidad/
+│   ├── dobles/
+│   └── contrato/
+├── .env.example
+├── package.json
+├── prisma.config.ts
+├── tsconfig.json
+└── vitest.config.ts
 ```
 
-La regla principal es:
+La dependencia entre capas es `infraestructura -> aplicacion -> dominio`. Las entidades de dominio no dependen de Prisma y `src/main.ts` es el unico punto que compone adaptadores, casos de uso y servidor. React vive en `infraestructura/ui` porque es el adaptador de entrada visual de la aplicacion.
 
-```text
-infraestructura -> aplicacion -> dominio
-```
-
-`dominio` declara el modelo medico, errores de negocio y puertos como
-`DoctorDAO`, `PacienteDAO`, `CitaDAO`, `ServicioAutenticacion` y
-`ServicioTokens`. `aplicacion` contiene los casos de uso. `infraestructura`
-contiene los adaptadores concretos: REST, Spring Data JPA, Spring Security, JWT,
-recursos de Spring y la interfaz React.
-
-La regla arquitectonica se verifica con:
-
-```bash
-./mvnw -Dtest=com.uam.medflow.arquitectura.ArquitecturaHexagonalTest test
-```
+Java, Spring, Maven, JPA y H2 fueron retirados despues de comprobar la paridad del backend Node con el backend anterior.
 
 ## Tecnologias
 
-- React 19 + Vite 8
-- Java 25 + Spring Boot 4
-- Spring Security + JWT con `jjwt`
-- Spring Data JPA
-- MySQL en ejecucion local
-- H2 en memoria para pruebas
-- Maven Wrapper
-- ESLint
+- Node.js 20.12 o superior
+- TypeScript con ESM y modo estricto
+- Express 5
+- Prisma 7 y `@prisma/adapter-mariadb`
+- MySQL existente, sin migraciones Prisma
+- JWT y bcrypt
+- Vitest y Supertest
+- React 19 y Vite 8
 
-## Requisitos
+## Instalacion
 
-- Node.js compatible con Vite 8
-- npm
-- Java 25
-- MySQL local para ejecutar la API contra datos reales
-- Git
-
-La configuracion principal de Spring esta en:
-
-```text
-src/infraestructura/recursos/application.properties
-```
-
-## Configuracion Local
-
-Instala dependencias JavaScript desde la raiz:
+Se requiere npm, Node.js 20.12 o superior, MySQL 8 o superior en `localhost:3306` y la base existente `clinica_db`.
 
 ```bash
+cp .env.example .env
 npm install
 ```
 
-Revisa las credenciales de MySQL en `src/infraestructura/recursos/application.properties`.
-Por defecto espera:
+Variables principales:
 
 ```text
-Host: localhost
-Puerto: 3306
-Base: clinica_db
-Usuario: root
-Password: root
+DATABASE_URL=mysql://usuario:password@localhost:3306/clinica_db
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+DATABASE_USER=medflow_app
+DATABASE_PASSWORD=...
+DATABASE_NAME=clinica_db
+PORT=3000
+FRONTEND_URL=http://localhost:5173
+TZ=America/Bogota
+JWT_SECRET=...
+JWT_EXPIRATION_MS=86400000
 ```
 
-Para ambientes compartidos configura un secreto JWT real:
-
-```bash
-export JWT_SECRET="un-secreto-largo-y-seguro"
-export JWT_EXPIRATION_MS=86400000
-```
+El usuario MySQL necesita `SELECT`, `INSERT`, `UPDATE` y `DELETE` sobre `clinica_db`, pero no permisos para alterar el esquema. La aplicacion no crea ni modifica tablas: no use `prisma migrate` ni `prisma db push`.
 
 ## Ejecucion
 
-Backend:
+Backend en `http://localhost:3000/api/v1`:
 
 ```bash
-./mvnw spring-boot:run
+npm run dev:backend
 ```
 
-API local:
-
-```text
-http://localhost:8080/api/v1
-```
-
-Frontend:
+Frontend en `http://localhost:5173`:
 
 ```bash
 npm run dev
 ```
 
-UI local:
+El frontend usa por defecto `http://localhost:3000/api/v1`. Puede cambiarse con `VITE_API_URL`.
 
-```text
-http://localhost:5173
-```
+## Prisma
 
-Si necesitas apuntar la UI a otra API:
+`prisma/schema.prisma` mapea las tablas y columnas existentes con `@map` y `@@map`. Prisma se usa solo como cliente de datos.
 
-```bash
-VITE_API_URL=http://localhost:8080/api/v1 npm run dev
-```
-
-## Pruebas y Build
-
-Backend:
+Para volver a inspeccionar una base clonada:
 
 ```bash
-./mvnw test
+DATABASE_URL='mysql://usuario:password@localhost:3306/clinica_db_node_test' npm run db:pull
 ```
 
-Frontend:
+El seed es explicito e idempotente:
 
 ```bash
-npm run lint
-npm run build
+DATABASE_NAME=clinica_db_node_test \
+DATABASE_URL='mysql://usuario:password@localhost:3306/clinica_db_node_test' \
+npm run db:seed
 ```
+
+Por seguridad, el comando rechaza `clinica_db`. Para cargarla deliberadamente se debe definir `ALLOW_MAIN_DATABASE_SEED=true` en esa ejecucion.
 
 ## API
 
-La referencia principal de endpoints, schemas y respuestas esta en:
+Rutas publicas:
 
-```text
-docs/open-api.yml
+- `POST /api/v1/auth/login`
+- `GET /api/v1/salud`
+- `GET /api/v1/docs`
+- `GET /api/v1/openapi.json`
+
+El CRUD de doctores, pacientes y procedimientos, junto con citas, calendario e historias clinicas, requiere JWT. Los errores usan siempre:
+
+```json
+{
+  "mensaje": "Texto del error",
+  "errores": []
+}
 ```
 
-Modulos implementados:
+Las fechas se intercambian como `YYYY-MM-DDTHH:mm:ss`, sin `Z`, en hora de Bogota.
 
-- Auth
-- Pacientes
-- Doctores
-- Procedimientos
-- Citas
-- Historias clinicas
-- Calendario medico
+## Comandos
 
-## Credenciales De Prueba
-
-Los datos semilla incluyen usuarios con la misma contrasena:
-
-```text
-Contrasena: Medflow123*
+```bash
+npm test
+npm run cov
+npm run arquitectura
+npm run lint
+npm run build:all
+npm run check
 ```
 
-Usuarios principales:
+`dist/backend` contiene la compilacion Node y `dist/frontend` la compilacion Vite. Ambos directorios, igual que `node_modules`, `coverage`, `.env` y el cliente generado de Prisma, estan excluidos de Git.
+
+## Credenciales de demostracion
+
+El seed conserva estos usuarios, todos con la contrasena `Medflow123*`:
 
 ```text
 admin@medflow.com
 doctor.prueba@medflow.com
 paciente.prueba@medflow.com
 ```
-
-Credencial recomendada para validar la experiencia medica:
-
-```text
-Correo: doctor.prueba@medflow.com
-Contrasena: Medflow123*
-```
-
-## Documentacion
-
-- `docs/arquitectura-hexagonal-medflow.md`: estructura hexagonal del proyecto.
-- `docs/backend-validation-thunder-client.md`: validacion manual del backend.
-- `docs/open-api.yml`: contrato OpenAPI.
-- `medflowDocuments/`: mockups, diagramas y documentos academicos del proyecto.
-
-## Reglas Implementadas
-
-- Pacientes no pueden repetir documento ni email.
-- Doctores no pueden repetir registro medico ni email.
-- Procedimientos no pueden repetir nombre.
-- Las citas deben programarse en fecha futura.
-- Un doctor no puede tener dos citas a la misma fecha y hora.
-- Un paciente no puede tener dos citas a la misma fecha y hora.
-- Estados validos de cita: `PROGRAMADA`, `COMPLETADA`, `CANCELADA`.
-- Una cita solo puede tener una historia clinica.
-- No se permite crear historia clinica para una cita cancelada.
-- Al crear una historia clinica, la cita queda marcada como `COMPLETADA`.
-- El calendario medico combina citas y eventos.
-- Los eventos deben terminar despues de iniciar y no deben cruzarse con citas o eventos activos del doctor.
-
-## Checklist Antes De Entregar
-
-- `./mvnw test` pasa.
-- `npm run lint` pasa.
-- `npm run build` pasa.
-- Backend inicia sin errores.
-- Frontend inicia sin errores.
-- Login funciona con `doctor.prueba@medflow.com`.
-- CRUD de pacientes funciona.
-- Gestion de citas funciona.
-- Calendario carga citas y eventos.
-- Historia clinica carga desde el panel de pacientes.
-- No hay secretos reales versionados.
-- No hay artefactos generados pendientes de commit.
