@@ -545,6 +545,12 @@
   color: #c43c31;
 }
 
+.status-badge.is-no-show {
+  border-color: #f0d9a8;
+  background: #fff8e8;
+  color: #895900;
+}
+
 .empty-state {
   margin: 20px 0 0;
   color: #5d6880;
@@ -2718,6 +2724,12 @@
 
 .dashboard-shell.is-dark .clinical-timeline::before {
   background: #263449;
+}
+
+.dashboard-shell.is-dark .status-badge.is-no-show {
+  border-color: #604a24;
+  background: #332a18;
+  color: #f0cf84;
 }
 
 .dashboard-shell.is-dark .clinical-record-meta > strong,

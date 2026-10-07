@@ -83,13 +83,13 @@ const procedimientos: Modulo = {
 }
 const citas: Modulo = {
   tag: 'Citas', entidad: 'Cita', singular: 'cita', relaciones: true,
-  crear: 'Requiere paciente, doctor y procedimiento existentes, y fecha futura. El estado omitido, nulo o vacío se convierte en PROGRAMADA. Se rechaza otra cita no cancelada del mismo doctor o paciente con exactamente la misma fecha y hora. Esta operación no verifica solapamientos por duración ni eventos del calendario.',
+  crear: 'Requiere paciente, doctor y procedimiento existentes, y fecha futura. El estado omitido, nulo o vacío se convierte en PROGRAMADA. Se rechaza otra cita que no esté cancelada ni marcada NO_ASISTIO del mismo doctor o paciente con exactamente la misma fecha y hora. Esta operación no verifica solapamientos por duración ni eventos del calendario.',
   conflicto: 'Estado no permitido o cita existente del mismo doctor o paciente a la misma fecha y hora.',
   listado: 'Lista citas por fecha y hora ascendente, incluyendo canceladas, sin paginación. El filtro fecha selecciona un día local completo; si se omite devuelve todas.',
 }
 const historias: Modulo = {
   tag: 'Historias clínicas', entidad: 'HistoriaClinica', singular: 'historia clínica', relaciones: true,
-  crear: 'Requiere una cita existente y no cancelada, sin historia previa. Obtiene paciente y doctor desde la cita, asigna fechaRegistro y cambia la cita a COMPLETADA en la misma transacción.',
+  crear: 'Requiere una cita existente que no esté cancelada ni marcada NO_ASISTIO, y sin historia previa. Obtiene paciente y doctor desde la cita, asigna fechaRegistro y cambia la cita a COMPLETADA en la misma transacción.',
   actualizar: 'Permite editar diagnóstico, observaciones y datos relevantes. Debe enviarse el citaId original: no se puede cambiar la cita, el paciente, el doctor ni la fecha de registro.',
   conflicto: 'Al crear: cita cancelada o con historia previa. Al actualizar: intento de cambiar la cita asociada.',
 }
@@ -114,7 +114,7 @@ export const openapi = {
 | Doctor | Profesional con registro médico y email únicos. Tiene múltiples citas, eventos e historias clínicas. |
 | Paciente | Persona atendida con documento y email únicos. Tiene múltiples citas e historias clínicas. |
 | Procedimiento | Servicio con nombre único, precio y duración en minutos. Se utiliza en múltiples citas. |
-| Cita | Une un paciente, un doctor y un procedimiento en una fecha y hora. Estados: PROGRAMADA, COMPLETADA y CANCELADA. |
+| Cita | Une un paciente, un doctor y un procedimiento en una fecha y hora. Estados: PROGRAMADA, COMPLETADA, CANCELADA y NO_ASISTIO. |
 | EventoCalendario | Bloque de agenda de un doctor, sin paciente ni procedimiento. La consulta de calendario lo combina con las citas. |
 | HistoriaClinica | Registro de diagnóstico, observaciones y datos relevantes; pertenece a una cita, con un máximo de una historia por cita. |
 
