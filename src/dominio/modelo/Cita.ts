@@ -2,7 +2,7 @@ import type { Doctor } from './Doctor.js'
 import type { Paciente } from './Paciente.js'
 import type { Procedimiento } from './Procedimiento.js'
 
-export const ESTADOS_CITA = ['PROGRAMADA', 'COMPLETADA', 'CANCELADA'] as const
+export const ESTADOS_CITA = ['PROGRAMADA', 'COMPLETADA', 'CANCELADA', 'NO_ASISTIO'] as const
 export type EstadoCita = (typeof ESTADOS_CITA)[number]
 
 export interface Cita {
