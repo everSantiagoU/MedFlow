@@ -49,7 +49,7 @@ export class CitaDAOPrisma implements CitaDAO {
 
   async listarActivasParaCruce(doctorId: number, desde: Date, hasta: Date) {
     const filas = await this.prisma.cita.findMany({
-      where: { doctorId, fechaHora: { gte: desde, lt: hasta }, NOT: { estado: 'CANCELADA' } },
+      where: { doctorId, fechaHora: { gte: desde, lt: hasta }, NOT: { estado: { in: ['CANCELADA', 'NO_ASISTIO'] } } },
       include: relaciones, orderBy: { fechaHora: 'asc' },
     })
     return filas.map(fila => aCita(fila as FilaCita))
@@ -57,14 +57,14 @@ export class CitaDAOPrisma implements CitaDAO {
 
   async existeCruceDoctor(doctorId: number, fechaHora: Date, exceptoId?: number) {
     return (await this.prisma.cita.count({ where: {
-      doctorId, fechaHora, NOT: { estado: 'CANCELADA' },
+      doctorId, fechaHora, NOT: { estado: { in: ['CANCELADA', 'NO_ASISTIO'] } },
       ...(exceptoId === undefined ? {} : { id: { not: exceptoId } }),
     } })) > 0
   }
 
   async existeCrucePaciente(pacienteId: number, fechaHora: Date, exceptoId?: number) {
     return (await this.prisma.cita.count({ where: {
-      pacienteId, fechaHora, NOT: { estado: 'CANCELADA' },
+      pacienteId, fechaHora, NOT: { estado: { in: ['CANCELADA', 'NO_ASISTIO'] } },
       ...(exceptoId === undefined ? {} : { id: { not: exceptoId } }),
     } })) > 0
   }

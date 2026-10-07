@@ -15,6 +15,9 @@ export class RegistrarHistoriaClinica {
     if (cita.estado.toUpperCase() === 'CANCELADA') {
       throw new Conflicto('No se puede crear historia clinica para una cita cancelada')
     }
+    if (cita.estado.toUpperCase() === 'NO_ASISTIO') {
+      throw new Conflicto('No se puede crear historia clinica para una cita marcada como no asistida')
+    }
     return aHistoriaClinicaDTO(await this.historias.guardarYCompletarCita({
       citaId: cita.id, pacienteId: cita.pacienteId, doctorId: cita.doctorId,
       diagnostico: datos.diagnostico.trim(), observaciones: datos.observaciones.trim(),

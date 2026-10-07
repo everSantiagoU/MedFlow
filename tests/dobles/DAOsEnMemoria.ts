@@ -52,9 +52,9 @@ export class CitaDAOEnMemoria implements CitaDAO {
   }
   async listarPorFecha(fecha?: string) { const filas = this.filas.filter(f => !fecha || f.fechaHora.toISOString().slice(0, 10) === fecha); return Promise.all(filas.sort((a,b) => +a.fechaHora - +b.fechaHora).map(f => this.detalle(f))) }
   async listarPorDoctorYRango(id: number, desde: Date, hasta: Date) { return Promise.all(this.filas.filter(f => f.doctorId === id && f.fechaHora >= desde && f.fechaHora < hasta).map(f => this.detalle(f))) }
-  async listarActivasParaCruce(id: number, desde: Date, hasta: Date) { return Promise.all(this.filas.filter(f => f.doctorId === id && f.estado !== 'CANCELADA' && f.fechaHora >= desde && f.fechaHora < hasta).map(f => this.detalle(f))) }
-  async existeCruceDoctor(id: number, fecha: Date, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.doctorId === id && f.estado !== 'CANCELADA' && +f.fechaHora === +fecha) }
-  async existeCrucePaciente(id: number, fecha: Date, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.pacienteId === id && f.estado !== 'CANCELADA' && +f.fechaHora === +fecha) }
+  async listarActivasParaCruce(id: number, desde: Date, hasta: Date) { return Promise.all(this.filas.filter(f => f.doctorId === id && !['CANCELADA', 'NO_ASISTIO'].includes(f.estado) && f.fechaHora >= desde && f.fechaHora < hasta).map(f => this.detalle(f))) }
+  async existeCruceDoctor(id: number, fecha: Date, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.doctorId === id && !['CANCELADA', 'NO_ASISTIO'].includes(f.estado) && +f.fechaHora === +fecha) }
+  async existeCrucePaciente(id: number, fecha: Date, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.pacienteId === id && !['CANCELADA', 'NO_ASISTIO'].includes(f.estado) && +f.fechaHora === +fecha) }
   async actualizarEstado(id: number, estado: string) { const fila = this.filas.find(f => f.id === id)!; fila.estado = estado; return this.detalle(fila) }
 }
 

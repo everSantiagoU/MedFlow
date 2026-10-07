@@ -403,6 +403,10 @@ function getNextHourDate() {
 }
 
 function formatStatus(status) {
+  if (status?.toUpperCase() === 'NO_ASISTIO') {
+    return 'No asistió'
+  }
+
   return status
     ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
     : 'Programada'
@@ -417,6 +421,10 @@ function getStatusClass(status) {
 
   if (normalized === 'cancelada') {
     return 'is-cancelled'
+  }
+
+  if (normalized === 'no_asistio') {
+    return 'is-no-show'
   }
 
   return 'is-pending'
@@ -693,7 +701,7 @@ function getAvailableAppointmentsForClinicalRecord(patient, appointments, clinic
     .filter(
       (appointment) =>
         String(appointment.pacienteId) === String(patient.id) &&
-        appointment.estado !== 'CANCELADA' &&
+        !['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado) &&
         !usedAppointmentIds.has(String(appointment.id)),
     )
     .sort((first, second) => parseDate(second.fechaHora) - parseDate(first.fechaHora))
@@ -708,7 +716,7 @@ function getNextPatientAppointment(patientId, appointments) {
 
       return (
         String(appointment.pacienteId) === String(patientId) &&
-        appointment.estado !== 'CANCELADA' &&
+        !['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado) &&
         date &&
         date >= now
       )
@@ -727,7 +735,7 @@ function appointmentMatchesSearch(appointment, searchTerm) {
     appointment.pacienteNombre,
     appointment.procedimientoNombre,
     appointment.doctorNombre,
-    appointment.estado,
+    formatStatus(appointment.estado),
   ]
     .filter(Boolean)
     .some((value) => value.toLowerCase().includes(normalizedTerm))
@@ -862,7 +870,7 @@ function getMonthCalendarDays(date) {
 function getInitialCalendarDate(appointments) {
   const now = new Date()
   const upcomingAppointment = appointments
-    .filter((appointment) => appointment.estado !== 'CANCELADA')
+    .filter((appointment) => !['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado))
     .map((appointment) => parseDate(appointment.fechaHora))
     .filter(Boolean)
     .filter((date) => date >= now)
@@ -1232,7 +1240,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
   const metrics = useMemo(() => {
     const now = new Date()
     const activeAppointments = data.appointments.filter(
-      (appointment) => appointment.estado !== 'CANCELADA',
+      (appointment) => !['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado),
     )
     const activeCalendarItems = data.dashboardCalendarItems.filter(
       (item) => item.estado !== 'CANCELADA',
@@ -1318,7 +1326,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
   const appointmentMetrics = useMemo(() => {
     const tomorrowValue = getDateInputValue(getTomorrowDate())
     const activeVisibleAppointments = visibleAppointments.filter(
-      (appointment) => appointment.estado !== 'CANCELADA',
+      (appointment) => !['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado),
     )
 
     return {
@@ -1328,7 +1336,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
       cancelled: visibleAppointments.filter((appointment) => appointment.estado === 'CANCELADA').length,
       tomorrow: data.appointments.filter(
         (appointment) =>
-          appointment.estado !== 'CANCELADA' &&
+          !['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado) &&
           appointmentMatchesDate(appointment, tomorrowValue),
       ).length,
       activeVisibleAppointments,
@@ -2377,6 +2385,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
               <option value="PROGRAMADA">Programadas</option>
               <option value="COMPLETADA">Completadas</option>
               <option value="CANCELADA">Canceladas</option>
+              <option value="NO_ASISTIO">No asistió</option>
             </select>
           </label>
         </section>
@@ -2534,7 +2543,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
     const selectedDayEvents = selectedDayActiveItems.filter((item) => item.tipo === 'EVENTO')
     const nextPatient = calendarItems.find((item) => {
       const startDate = parseDate(item.inicio)
-      return item.tipo === 'CITA' && item.estado !== 'CANCELADA' && startDate && startDate >= new Date()
+      return item.tipo === 'CITA' && !['CANCELADA', 'NO_ASISTIO'].includes(item.estado) && startDate && startDate >= new Date()
     })
     const nextEvent = calendarItems.find((item) => {
       const startDate = parseDate(item.inicio)
@@ -3014,6 +3023,7 @@ function AppointmentForm({
             <option value="PROGRAMADA">Programada</option>
             <option value="COMPLETADA">Completada</option>
             <option value="CANCELADA">Cancelada</option>
+            <option value="NO_ASISTIO">No asistió</option>
           </select>
         </label>
       </div>

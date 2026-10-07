@@ -44,7 +44,7 @@ const nombresCita = {
   doctorEspecialidad: texto('Especialidad del doctor relacionado.', 'Dermatología'),
   procedimientoNombre: texto('Nombre del procedimiento relacionado.', 'Consulta dermatológica'),
 }
-const estado = { type: 'string', enum: ['PROGRAMADA', 'COMPLETADA', 'CANCELADA'], description: 'Estado de la cita.', example: 'PROGRAMADA' }
+const estado = { type: 'string', enum: ['PROGRAMADA', 'COMPLETADA', 'CANCELADA', 'NO_ASISTIO'], description: 'Estado de la cita.', example: 'PROGRAMADA' }
 const historia = {
   citaId: entero('Cita asociada. Solo se permite una historia por cita; no se puede cambiar al actualizar.'),
   diagnostico: texto('Diagnóstico registrado por el profesional.', 'Dermatitis de contacto', 5000),
@@ -79,7 +79,7 @@ export const schemas = {
   CitaSolicitud: objeto('Asocia paciente, doctor y procedimiento. La fecha debe ser futura también al actualizar mediante PUT.', {
     ...relacionesCita,
     fechaHora: fecha('Inicio futuro de la cita.'),
-    estado: { type: 'string', nullable: true, maxLength: 50, default: 'PROGRAMADA', example: 'PROGRAMADA', description: 'Acepta PROGRAMADA, COMPLETADA o CANCELADA, sin distinguir mayúsculas y recortando espacios. Omitido, nulo o vacío se convierte en PROGRAMADA. Otro valor produce 409.' },
+    estado: { type: 'string', nullable: true, maxLength: 50, default: 'PROGRAMADA', example: 'PROGRAMADA', description: 'Acepta PROGRAMADA, COMPLETADA, CANCELADA o NO_ASISTIO, sin distinguir mayúsculas y recortando espacios. Omitido, nulo o vacío se convierte en PROGRAMADA. Otro valor produce 409.' },
   }, ['pacienteId', 'doctorId', 'procedimientoId', 'fechaHora']),
   Cita: objeto('Cita con identificadores y datos descriptivos de sus relaciones. Puede tener como máximo una historia clínica.', {
     id, fechaHora: fecha('Inicio de la cita.'), estado, ...relacionesCita, ...nombresCita,
