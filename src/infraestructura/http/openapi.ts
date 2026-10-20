@@ -161,6 +161,10 @@ La especificación completa está disponible en [OpenAPI JSON](/api/v1/openapi.j
     '/procedimientos': coleccion(procedimientos), '/procedimientos/{id}': detalle(procedimientos),
     '/citas': { ...coleccion(citas), get: { ...coleccion(citas).get, parameters: [{
       name: 'fecha', in: 'query', required: false, description: 'Día local a consultar (YYYY-MM-DD).', schema: { type: 'string', format: 'date' }, example: '2030-05-12',
+    }, {
+      name: 'doctorId', in: 'query', required: false, description: 'Identificador del profesional. Se combina con fecha y estado.', schema: { type: 'integer', minimum: 1, maximum: 2147483647 }, example: 1,
+    }, {
+      name: 'estado', in: 'query', required: false, description: 'Estado exacto de la cita. Los filtros se combinan (AND); omitirlos devuelve todas las citas.', schema: { type: 'string', enum: ['PROGRAMADA', 'COMPLETADA', 'CANCELADA', 'NO_ASISTIO'] },
     }] } },
     '/citas/{id}': detalle(citas),
     '/citas/{id}/cancelar': { parameters: [parametroId()], patch: {

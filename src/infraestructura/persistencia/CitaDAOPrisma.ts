@@ -1,5 +1,5 @@
 import type { Cita, CitaNueva } from '../../dominio/modelo/Cita.js'
-import type { CitaDAO } from '../../dominio/puertos/index.js'
+import type { CitaDAO, FiltrosCitas } from '../../dominio/puertos/index.js'
 import { parsearFechaLocal } from '../../aplicacion/fechas.js'
 import { aCita } from './conversoresPrisma.js'
 import type { FilaCita } from './conversoresPrisma.js'
@@ -26,17 +26,17 @@ export class CitaDAOPrisma implements CitaDAO {
     return aCita(fila as FilaCita)
   }
 
-  async listarPorFecha(fecha?: string) {
+  async listarPorFecha(fecha?: string, filtros: FiltrosCitas = {}) {
     let where = {}
     if (fecha) {
       const desde = parsearFechaLocal(`${fecha}T00:00:00`)
       if (desde) {
         const hasta = new Date(desde)
-        hasta.setDate(hasta.getDate() + 1)
+        hasta.setUTCDate(hasta.getUTCDate() + 1)
         where = { fechaHora: { gte: desde, lt: hasta } }
       }
     }
-    const filas = await this.prisma.cita.findMany({ where, include: relaciones, orderBy: { fechaHora: 'asc' } })
+    const filas = await this.prisma.cita.findMany({ where: { ...where, ...filtros }, include: relaciones, orderBy: { fechaHora: 'asc' } })
     return filas.map(fila => aCita(fila as FilaCita))
   }
 
