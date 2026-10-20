@@ -5,7 +5,7 @@ import type { HistoriaClinicaDetalle, HistoriaClinicaNueva } from '../../src/dom
 import type { PacienteDAOEnMemoria } from './PacienteDAOEnMemoria.js'
 import type { Procedimiento, ProcedimientoNuevo } from '../../src/dominio/modelo/Procedimiento.js'
 import type { Rol, Usuario } from '../../src/dominio/modelo/Usuario.js'
-import type { CitaDAO, EventoCalendarioDAO, HistoriaClinicaDAO, ProcedimientoDAO, ServicioClaves, UsuarioDAO } from '../../src/dominio/puertos/index.js'
+import type { FiltrosCitas, CitaDAO, EventoCalendarioDAO, HistoriaClinicaDAO, ProcedimientoDAO, ServicioClaves, UsuarioDAO } from '../../src/dominio/puertos/index.js'
 
 const contiene = (valor: string, termino: string) => valor.toLowerCase().includes(termino.toLowerCase())
 
@@ -50,7 +50,7 @@ export class CitaDAOEnMemoria implements CitaDAO {
     if (indice >= 0) this.filas[indice] = fila; else this.filas.push(fila)
     return this.detalle(fila)
   }
-  async listarPorFecha(fecha?: string) { const filas = this.filas.filter(f => !fecha || f.fechaHora.toISOString().slice(0, 10) === fecha); return Promise.all(filas.sort((a,b) => +a.fechaHora - +b.fechaHora).map(f => this.detalle(f))) }
+  async listarPorFecha(fecha?: string, filtros: FiltrosCitas = {}) { const filas = this.filas.filter(f => (!fecha || f.fechaHora.toISOString().slice(0, 10) === fecha) && (filtros.doctorId === undefined || f.doctorId === filtros.doctorId) && (!filtros.estado || f.estado === filtros.estado)); return Promise.all(filas.sort((a,b) => +a.fechaHora - +b.fechaHora).map(f => this.detalle(f))) }
   async listarPorDoctorYRango(id: number, desde: Date, hasta: Date) { return Promise.all(this.filas.filter(f => f.doctorId === id && f.fechaHora >= desde && f.fechaHora < hasta).map(f => this.detalle(f))) }
   async listarActivasParaCruce(id: number, desde: Date, hasta: Date) { return Promise.all(this.filas.filter(f => f.doctorId === id && f.estado !== 'CANCELADA' && f.fechaHora >= desde && f.fechaHora < hasta).map(f => this.detalle(f))) }
   async existeCruceDoctor(id: number, fecha: Date, exceptoId?: number) { return this.filas.some(f => f.id !== exceptoId && f.doctorId === id && f.estado !== 'CANCELADA' && +f.fechaHora === +fecha) }

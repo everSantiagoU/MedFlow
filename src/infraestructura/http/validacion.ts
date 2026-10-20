@@ -137,3 +137,25 @@ export function validarFechaConsulta(valor: unknown): string | undefined {
   }
   return valor
 }
+
+
+// Los filtros ausentes no restringen el listado; valores mal formados producen 400.
+export function validarFiltrosCitas(query: Record<string, unknown>) {
+  const fecha = validarFechaConsulta(query['fecha'])
+  const filtros: import('../../dominio/puertos/index.js').FiltrosCitas = {}
+  if (query['doctorId'] !== undefined) {
+    const valor = query['doctorId']
+    if (typeof valor !== 'string' || !/^\d+$/.test(valor) || !Number.isSafeInteger(Number(valor)) || Number(valor) < 1 || Number(valor) > 2147483647) {
+      throw new SolicitudInvalida(['doctorId: debe ser un entero positivo válido'])
+    }
+    filtros.doctorId = Number(valor)
+  }
+  if (query['estado'] !== undefined) {
+    const valor = query['estado']
+    if (typeof valor !== 'string' || !['PROGRAMADA', 'COMPLETADA', 'CANCELADA'].includes(valor)) {
+      throw new SolicitudInvalida(['estado: debe ser PROGRAMADA, COMPLETADA o CANCELADA'])
+    }
+    filtros.estado = valor as 'PROGRAMADA' | 'COMPLETADA' | 'CANCELADA'
+  }
+  return { fecha, filtros }
+}

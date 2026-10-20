@@ -50,10 +50,15 @@ export interface ProcedimientoDAO {
   listar(busqueda?: string): Promise<Procedimiento[]>
 }
 
+export interface FiltrosCitas {
+  doctorId?: number
+  estado?: 'PROGRAMADA' | 'COMPLETADA' | 'CANCELADA'
+}
+
 export interface CitaDAO {
   porId(id: number): Promise<CitaDetalle | null>
   guardar(cita: CitaNueva | Cita): Promise<CitaDetalle>
-  listarPorFecha(fecha?: string): Promise<CitaDetalle[]>
+  listarPorFecha(fecha?: string, filtros?: FiltrosCitas): Promise<CitaDetalle[]>
   listarPorDoctorYRango(doctorId: number, desde: Date, hasta: Date): Promise<CitaDetalle[]>
   listarActivasParaCruce(doctorId: number, desde: Date, hasta: Date): Promise<CitaDetalle[]>
   existeCruceDoctor(doctorId: number, fechaHora: Date, exceptoId?: number): Promise<boolean>

@@ -994,6 +994,9 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentStatusFilter, setAppointmentStatusFilter] = useState('TODOS')
   const [appointmentDateFilter, setAppointmentDateFilter] = useState('')
+  const [appointmentDoctorFilter, setAppointmentDoctorFilter] = useState('')
+  const [appointmentResults, setAppointmentResults] = useState({ records: [], loading: true, error: null })
+  const [appointmentRetry, setAppointmentRetry] = useState(0)
   const [appointmentForm, setAppointmentForm] = useState(getEmptyAppointmentForm)
   const [appointmentFormOpen, setAppointmentFormOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState(null)
@@ -1307,13 +1310,39 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
     [data.patients, patientSearch],
   )
 
+  useEffect(() => {
+    const controller = new AbortController()
+    const params = new URLSearchParams()
+    if (appointmentDateFilter) params.set('fecha', appointmentDateFilter)
+    if (appointmentDoctorFilter) params.set('doctorId', appointmentDoctorFilter)
+    if (appointmentStatusFilter !== 'TODOS') params.set('estado', appointmentStatusFilter)
+    setAppointmentResults({ records: [], loading: true, error: null })
+    fetchWithAuth(apiBaseUrl, session.token, `/citas?${params}`, controller.signal)
+      .then((records) => {
+        if (!controller.signal.aborted) setAppointmentResults({ records, loading: false, error: null })
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setAppointmentResults({
+          records: [], loading: false, error: 'No se pudieron consultar las citas. Intente nuevamente.',
+        })
+      })
+    return () => controller.abort()
+  }, [apiBaseUrl, session.token, appointmentDateFilter, appointmentDoctorFilter, appointmentStatusFilter, data.appointments, appointmentRetry])
+
+  function clearAppointmentFilters() {
+    setAppointmentSearch('')
+    setAppointmentDateFilter('')
+    setAppointmentDoctorFilter('')
+    setAppointmentStatusFilter('TODOS')
+  }
+
   const visibleAppointments = useMemo(() => {
-    return data.appointments
+    return appointmentResults.records
       .filter((appointment) => appointmentMatchesSearch(appointment, appointmentSearch))
       .filter((appointment) => appointmentMatchesDate(appointment, appointmentDateFilter))
       .filter((appointment) => appointmentMatchesStatus(appointment, appointmentStatusFilter))
       .sort((first, second) => parseDate(first.fechaHora) - parseDate(second.fechaHora))
-  }, [appointmentDateFilter, appointmentSearch, appointmentStatusFilter, data.appointments])
+  }, [appointmentDateFilter, appointmentSearch, appointmentStatusFilter, appointmentResults.records])
 
   const appointmentMetrics = useMemo(() => {
     const tomorrowValue = getDateInputValue(getTomorrowDate())
@@ -2352,6 +2381,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
             <SearchIcon />
             <input
               type="search"
+              aria-label="Buscar paciente o motivo de consulta"
               placeholder="Buscar paciente o motivo de consulta..."
               value={appointmentSearch}
               onChange={(event) => setAppointmentSearch(event.target.value)}
@@ -2368,6 +2398,16 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
           </label>
 
           <label className="appointment-field">
+            <span>Profesional</span>
+            <select value={appointmentDoctorFilter} onChange={(event) => setAppointmentDoctorFilter(event.target.value)}>
+              <option value="">Todos los profesionales</option>
+              {data.doctors.map((doctor) => (
+                <option key={doctor.id} value={doctor.id}>{doctor.nombreCompleto}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="appointment-field">
             <span>Estado</span>
             <select
               value={appointmentStatusFilter}
@@ -2380,6 +2420,22 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
             </select>
           </label>
         </section>
+
+        <div className="appointment-filter-actions">
+          <p role="status" aria-live="polite">
+            {appointmentResults.loading ? 'Consultando citas…' : appointmentResults.error ? 'Consulta no disponible' : `${visibleAppointments.length} ${visibleAppointments.length === 1 ? 'cita encontrada' : 'citas encontradas'}`}
+          </p>
+          <button type="button" className="secondary-action" onClick={clearAppointmentFilters}
+            disabled={!appointmentSearch && !appointmentDateFilter && !appointmentDoctorFilter && appointmentStatusFilter === 'TODOS'}>
+            Limpiar filtros
+          </button>
+        </div>
+        {appointmentResults.error ? (
+          <div className="dashboard-notice" role="alert">
+            {appointmentResults.error}
+            <button type="button" className="secondary-action" onClick={() => setAppointmentRetry((value) => value + 1)}>Reintentar</button>
+          </div>
+        ) : null}
 
         <section className="metric-grid appointment-metrics" aria-label="Indicadores de citas">
           <MetricCard
@@ -2400,7 +2456,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
             icon={CalendarIcon}
             label="Agenda mañana"
             tone="violet"
-            trend={`${appointmentMetrics.pending} pendientes hoy`}
+            trend={`${appointmentMetrics.pending} programadas en la selección`}
             value={appointmentMetrics.tomorrow}
           />
         </section>
@@ -2418,7 +2474,8 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
             <table className="appointments-table">
               <thead>
                 <tr>
-                  <th>Hora</th>
+                  <th>Fecha y hora</th>
+                  <th>Profesional</th>
                   <th>Paciente</th>
                   <th>Motivo de consulta</th>
                   <th>Estado</th>
@@ -2431,9 +2488,10 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
                     <td>
                       <span className="appointment-hour">
                         <ClockIcon />
-                        <strong>{formatTime(appointment.fechaHora)}</strong>
+                        <strong>{parseDate(appointment.fechaHora).toLocaleDateString('es-CO')} · {formatTime(appointment.fechaHora)}</strong>
                       </span>
                     </td>
+                    <td>{appointment.doctorNombre}</td>
                     <td>
                       <span className="patient-cell">
                         <span className="patient-avatar">
@@ -2477,7 +2535,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
             </table>
           </div>
 
-          {visibleAppointments.length === 0 ? (
+          {!appointmentResults.loading && !appointmentResults.error && visibleAppointments.length === 0 ? (
             <p className="empty-state">No hay citas con los filtros seleccionados.</p>
           ) : null}
         </section>

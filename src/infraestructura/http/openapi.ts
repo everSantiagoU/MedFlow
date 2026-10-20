@@ -29,7 +29,16 @@ export const openapi = {
     '/doctores': crud('Doctores'), '/doctores/{id}': detalleCrud('Doctores'),
     '/pacientes': crud('Pacientes'), '/pacientes/{id}': detalleCrud('Pacientes'),
     '/procedimientos': crud('Procedimientos'), '/procedimientos/{id}': detalleCrud('Procedimientos'),
-    '/citas': crud('Citas'),
+    '/citas': { ...crud('Citas'), get: {
+      ...crud('Citas').get,
+      description: 'Lista citas ordenadas por fecha. Los filtros se combinan (AND); omitirlos devuelve todas las citas. Un profesional sin citas devuelve [].',
+      parameters: [
+        { name: 'fecha', in: 'query', required: false, description: 'Día local completo, sin zona horaria.', schema: { type: 'string', format: 'date' }, example: '2030-05-12' },
+        { name: 'doctorId', in: 'query', required: false, description: 'Identificador del profesional.', schema: { type: 'integer', minimum: 1, maximum: 2147483647 }, example: 1 },
+        { name: 'estado', in: 'query', required: false, description: 'Estado exacto de la cita.', schema: { type: 'string', enum: ['PROGRAMADA', 'COMPLETADA', 'CANCELADA'] } },
+      ],
+      responses: { ...crud('Citas').get.responses, 400: { description: 'Filtro inválido', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } } },
+    } },
     '/citas/{id}': detalleCrud('Citas', false),
     '/citas/{id}/cancelar': { patch: { tags: ['Citas'], summary: 'Cancelar cita', security: [{ bearerAuth: [] }], responses: { 200: { description: 'Cita cancelada' }, 404: { description: 'No encontrada' } } } },
     '/calendario': { get: { tags: ['Calendario'], summary: 'Consultar agenda de un doctor por rango', security: [{ bearerAuth: [] }], responses: { 200: { description: 'Citas y eventos ordenados' } } } },

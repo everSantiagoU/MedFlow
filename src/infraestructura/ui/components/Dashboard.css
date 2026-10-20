@@ -1755,7 +1755,7 @@
 
 .appointments-filter-panel {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) 180px 180px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   align-items: end;
   margin-bottom: 28px;
@@ -3101,3 +3101,16 @@
     box-shadow: none;
   }
 }
+
+
+.appointment-filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: -12px 0 24px;
+}
+.appointment-filter-actions p { margin: 0; }
+.appointment-field select { min-width: 0; width: 100%; }
+.appointment-filter-actions button:disabled { opacity: 0.5; cursor: default; }
