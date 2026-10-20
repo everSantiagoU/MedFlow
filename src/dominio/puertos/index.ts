@@ -52,7 +52,7 @@ export interface ProcedimientoDAO {
 
 export interface FiltrosCitas {
   doctorId?: number
-  estado?: 'PROGRAMADA' | 'COMPLETADA' | 'CANCELADA'
+  estado?: 'PROGRAMADA' | 'COMPLETADA' | 'CANCELADA' | 'NO_ASISTIO'
 }
 
 export interface CitaDAO {

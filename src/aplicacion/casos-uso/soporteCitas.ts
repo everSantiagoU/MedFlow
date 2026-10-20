@@ -7,7 +7,7 @@ import type { DatosCita } from './tipos.js'
 export function normalizarEstado(estado?: string): string {
   if (!estado?.trim()) return 'PROGRAMADA'
   const normalizado = estado.trim().toUpperCase()
-  if (!['PROGRAMADA', 'COMPLETADA', 'CANCELADA'].includes(normalizado)) {
+  if (!['PROGRAMADA', 'COMPLETADA', 'CANCELADA', 'NO_ASISTIO'].includes(normalizado)) {
     throw new Conflicto('El estado de la cita no es valido')
   }
   return normalizado

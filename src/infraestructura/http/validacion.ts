@@ -152,10 +152,10 @@ export function validarFiltrosCitas(query: Record<string, unknown>) {
   }
   if (query['estado'] !== undefined) {
     const valor = query['estado']
-    if (typeof valor !== 'string' || !['PROGRAMADA', 'COMPLETADA', 'CANCELADA'].includes(valor)) {
-      throw new SolicitudInvalida(['estado: debe ser PROGRAMADA, COMPLETADA o CANCELADA'])
+    if (typeof valor !== 'string' || !['PROGRAMADA', 'COMPLETADA', 'CANCELADA', 'NO_ASISTIO'].includes(valor)) {
+      throw new SolicitudInvalida(['estado: debe ser PROGRAMADA, COMPLETADA, CANCELADA o NO_ASISTIO'])
     }
-    filtros.estado = valor as 'PROGRAMADA' | 'COMPLETADA' | 'CANCELADA'
+    filtros.estado = valor as 'PROGRAMADA' | 'COMPLETADA' | 'CANCELADA' | 'NO_ASISTIO'
   }
   return { fecha, filtros }
 }
