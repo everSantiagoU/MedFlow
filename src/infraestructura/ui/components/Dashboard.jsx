@@ -492,7 +492,7 @@ function patientMatchesSearch(patient, searchTerm) {
     return true
   }
 
-  return [patient.nombreCompleto, patient.documento, patient.telefono, patient.email]
+  return [patient.nombreCompleto, patient.documento]
     .filter(Boolean)
     .some((value) => value.toLowerCase().includes(normalizedTerm))
 }
@@ -2064,7 +2064,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
               <SearchIcon />
               <input
                 type="search"
-                placeholder="Buscar por nombre, documento, correo o teléfono..."
+                placeholder="Buscar por nombre o documento..."
                 value={patientSearch}
                 onChange={(event) => setPatientSearch(event.target.value)}
               />
