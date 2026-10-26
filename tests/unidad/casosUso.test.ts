@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Conflicto, CredencialesInvalidas, RecursoNoEncontrado } from '../../src/aplicacion/errores.js'
 import { parsearFechaLocal } from '../../src/aplicacion/fechas.js'
+import { MarcarInasistencia } from '../../src/aplicacion/casos-uso/MarcarInasistencia.js'
 import { armarAplicacion } from '../dobles/armarAplicacion.js'
 
 const futura = (hora = 10) => parsearFechaLocal(`2030-05-12T${String(hora).padStart(2, '0')}:00:00`)!
@@ -59,6 +60,17 @@ describe('citas, calendario e historia clinica', () => {
     await deps.registrarEventoCalendario.ejecutar({ doctorId: 1, titulo: 'Reunion', inicio: futura(12), fin: futura(13) })
     const calendario = await deps.consultarCalendario.ejecutar(1, futura(9), futura(14))
     expect(calendario.map(e => e.tipo)).toEqual(['CITA', 'EVENTO'])
+  })
+
+  it('exige que la hora de la cita haya pasado estrictamente para registrar inasistencia', async () => {
+    const { almacenes } = await armarAplicacion()
+    const horaProgramada = futura()
+    const cita = await almacenes.citas.guardar({
+      pacienteId: 1, doctorId: 1, procedimientoId: 1, fechaHora: horaProgramada, estado: 'PROGRAMADA',
+    })
+    const marcarInasistencia = new MarcarInasistencia(almacenes.citas, () => new Date(horaProgramada))
+
+    await expect(marcarInasistencia.ejecutar(cita.id)).rejects.toThrow('todavía no ha pasado')
   })
 
   it('registra historia y completa la cita dentro del puerto transaccional', async () => {

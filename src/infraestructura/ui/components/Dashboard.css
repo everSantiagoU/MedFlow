@@ -961,6 +961,11 @@
   color: #d44237;
 }
 
+.patient-actions button.is-warning:hover:not(:disabled) {
+  background: #fff8e8;
+  color: #a46700;
+}
+
 .patient-actions svg {
   width: 18px;
   height: 18px;
@@ -2170,6 +2175,11 @@
   background: #fff4f2;
 }
 
+.calendar-item.is-no-show {
+  border-left-color: #d99516;
+  background: #fff8e8;
+}
+
 .calendar-item.is-event {
   border-left-color: #8e65ff;
   background: #f5f1ff;
@@ -2247,6 +2257,11 @@
 .calendar-month-cell em.is-cancelled {
   background: #fff4f2;
   color: #c43c31;
+}
+
+.calendar-month-cell em.is-no-show {
+  background: #fff8e8;
+  color: #895900;
 }
 
 .calendar-month-cell small {
@@ -2386,6 +2401,10 @@
 
 .calendar-legend i.is-cancelled {
   background: #ee5149;
+}
+
+.calendar-legend i.is-no-show {
+  background: #d99516;
 }
 
 .dashboard-footer {
@@ -2759,6 +2778,12 @@
 .dashboard-shell.is-dark .calendar-item.is-cancelled,
 .dashboard-shell.is-dark .calendar-month-cell em.is-cancelled {
   background: #321d20;
+}
+
+.dashboard-shell.is-dark .calendar-item.is-no-show,
+.dashboard-shell.is-dark .calendar-month-cell em.is-no-show {
+  background: #332a18;
+  color: #f0cf84;
 }
 
 .dashboard-shell.is-dark .calendar-item.is-event,

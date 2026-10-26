@@ -79,7 +79,7 @@ export const schemas = {
   CitaSolicitud: objeto('Asocia paciente, doctor y procedimiento. La fecha debe ser futura también al actualizar mediante PUT.', {
     ...relacionesCita,
     fechaHora: fecha('Inicio futuro de la cita.'),
-    estado: { type: 'string', nullable: true, maxLength: 50, default: 'PROGRAMADA', example: 'PROGRAMADA', description: 'Acepta PROGRAMADA, COMPLETADA, CANCELADA o NO_ASISTIO, sin distinguir mayúsculas y recortando espacios. Omitido, nulo o vacío se convierte en PROGRAMADA. Otro valor produce 409.' },
+    estado: { type: 'string', nullable: true, enum: ['PROGRAMADA', 'COMPLETADA', 'CANCELADA'], maxLength: 50, default: 'PROGRAMADA', example: 'PROGRAMADA', description: 'Acepta PROGRAMADA, COMPLETADA o CANCELADA, sin distinguir mayúsculas y recortando espacios. Omitido, nulo o vacío se convierte en PROGRAMADA. NO_ASISTIO sólo se asigna mediante PATCH /citas/{id}/inasistencia.' },
   }, ['pacienteId', 'doctorId', 'procedimientoId', 'fechaHora']),
   Cita: objeto('Cita con identificadores y datos descriptivos de sus relaciones. Puede tener como máximo una historia clínica.', {
     id, fechaHora: fecha('Inicio de la cita.'), estado, ...relacionesCita, ...nombresCita,

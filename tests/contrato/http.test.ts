@@ -17,6 +17,7 @@ describe('contrato HTTP /api/v1', () => {
     await request(app).get('/api/v1/salud').expect(200, { estado: 'ok' })
     const spec = await request(app).get('/api/v1/openapi.json').expect(200)
     expect(spec.body.paths['/historias-clinicas/paciente/{pacienteId}']).toBeDefined()
+    expect(spec.body.paths['/citas/{id}/inasistencia']).toBeDefined()
   })
 
   it('protege todos los endpoints de negocio', async () => {

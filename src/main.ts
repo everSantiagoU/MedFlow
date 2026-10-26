@@ -15,6 +15,7 @@ import { ListarHistoriasClinicas } from './aplicacion/casos-uso/ListarHistoriasC
 import { ListarHistoriasPorPaciente } from './aplicacion/casos-uso/ListarHistoriasPorPaciente.js'
 import { ListarPacientes } from './aplicacion/casos-uso/ListarPacientes.js'
 import { ListarProcedimientos } from './aplicacion/casos-uso/ListarProcedimientos.js'
+import { MarcarInasistencia } from './aplicacion/casos-uso/MarcarInasistencia.js'
 import { ObtenerCita } from './aplicacion/casos-uso/ObtenerCita.js'
 import { ObtenerDoctor } from './aplicacion/casos-uso/ObtenerDoctor.js'
 import { ObtenerHistoriaClinica } from './aplicacion/casos-uso/ObtenerHistoriaClinica.js'
@@ -62,7 +63,7 @@ const deps = {
   listarDoctores: new ListarDoctores(doctores), obtenerDoctor, registrarDoctor: new RegistrarDoctor(doctores), actualizarDoctor: new ActualizarDoctor(doctores, obtenerDoctor), eliminarDoctor: new EliminarDoctor(doctores, obtenerDoctor),
   listarPacientes: new ListarPacientes(pacientes), obtenerPaciente, registrarPaciente: new RegistrarPaciente(pacientes), actualizarPaciente: new ActualizarPaciente(pacientes, obtenerPaciente), eliminarPaciente: new EliminarPaciente(pacientes, obtenerPaciente),
   listarProcedimientos: new ListarProcedimientos(procedimientos), obtenerProcedimiento: new ObtenerProcedimiento(procedimientos), registrarProcedimiento: new RegistrarProcedimiento(procedimientos), actualizarProcedimiento: new ActualizarProcedimiento(procedimientos), eliminarProcedimiento: new EliminarProcedimiento(procedimientos),
-  listarCitas: new ListarCitas(citas), obtenerCita: new ObtenerCita(citas), registrarCita: new RegistrarCita(citas, obtenerPaciente, obtenerDoctor, procedimientos), actualizarCita: new ActualizarCita(citas, obtenerPaciente, obtenerDoctor, procedimientos), cancelarCita: new CancelarCita(citas),
+  listarCitas: new ListarCitas(citas), obtenerCita: new ObtenerCita(citas), registrarCita: new RegistrarCita(citas, obtenerPaciente, obtenerDoctor, procedimientos), actualizarCita: new ActualizarCita(citas, obtenerPaciente, obtenerDoctor, procedimientos), cancelarCita: new CancelarCita(citas), marcarInasistencia: new MarcarInasistencia(citas),
   consultarCalendario: new ConsultarCalendario(eventos, citas, doctores), registrarEventoCalendario: new RegistrarEventoCalendario(eventos, citas, doctores),
   listarHistorias: new ListarHistoriasClinicas(historias), obtenerHistoria: new ObtenerHistoriaClinica(historias), listarHistoriasPorPaciente: new ListarHistoriasPorPaciente(historias, obtenerPaciente), registrarHistoria: new RegistrarHistoriaClinica(historias, citas), actualizarHistoria: new ActualizarHistoriaClinica(historias),
 }

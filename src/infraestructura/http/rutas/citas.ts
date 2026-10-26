@@ -13,5 +13,6 @@ export function rutasCitas(deps: DependenciasHttp): Router {
   rutas.get('/:id', manejar(async (req, res) => res.json(await deps.obtenerCita.ejecutar(validarId(req.params['id'] ?? '')))))
   rutas.put('/:id', manejar(async (req, res) => res.json(await deps.actualizarCita.ejecutar(validarId(req.params['id'] ?? ''), validarCita(req.body)))))
   rutas.patch('/:id/cancelar', manejar(async (req, res) => res.json(await deps.cancelarCita.ejecutar(validarId(req.params['id'] ?? '')))))
+  rutas.patch('/:id/inasistencia', manejar(async (req, res) => res.json(await deps.marcarInasistencia.ejecutar(validarId(req.params['id'] ?? '')))))
   return rutas
 }
