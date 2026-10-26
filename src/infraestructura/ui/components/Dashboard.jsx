@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './Dashboard.css'
 import logoDashboard from '../assets/logoDashboard.png'
 
@@ -1019,7 +1019,9 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
   const [editingAppointment, setEditingAppointment] = useState(null)
   const [appointmentFeedback, setAppointmentFeedback] = useState(null)
   const [savingAppointment, setSavingAppointment] = useState(false)
-  const [attendanceUpdatingId, setAttendanceUpdatingId] = useState(null)
+  const [confirmation, setConfirmation] = useState(null)
+  const [confirmationBusy, setConfirmationBusy] = useState(false)
+  const [confirmationError, setConfirmationError] = useState(null)
   const [currentTime, setCurrentTime] = useState(() => new Date())
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [calendarDateTouched, setCalendarDateTouched] = useState(false)
@@ -1672,68 +1674,123 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
     }
   }
 
-  async function handleCancelAppointment(appointment) {
-    const confirmed = window.confirm(
-      `¿Cancelar la cita de ${appointment.pacienteNombre} a las ${formatTime(appointment.fechaHora)}?`,
-    )
-
-    if (!confirmed) {
-      return
-    }
-
-    try {
-      await requestWithAuth(apiBaseUrl, session.token, `/citas/${appointment.id}/cancelar`, {
-        method: 'PATCH',
-      })
-      await refreshAppointments()
-      await refreshCalendarItems()
-      setAppointmentFeedback({
-        type: 'success',
-        message: 'Cita cancelada correctamente.',
-      })
-    } catch (error) {
-      setAppointmentFeedback({
-        type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'No fue posible cancelar la cita.',
-      })
-    }
+  function openConfirmation(action) {
+    setConfirmationError(null)
+    setConfirmation(action)
   }
 
-  async function handleMarkNoShow(appointment) {
-    const confirmed = window.confirm(
-      `¿Registrar que ${appointment.pacienteNombre} no asistió a la cita de las ${formatTime(appointment.fechaHora)}?`,
-    )
+  function closeConfirmation() {
+    if (confirmationBusy) {
+      return
+    }
+    setConfirmation(null)
+    setConfirmationError(null)
+  }
 
-    if (!confirmed) {
+  function requestCancelAppointment(appointment) {
+    openConfirmation({
+      kind: 'cancel-appointment',
+      title: 'Cancelar cita',
+      subject: `Cita de ${appointment.pacienteNombre}`,
+      details: [
+        `${formatShortDate(appointment.fechaHora)} · ${formatTime(appointment.fechaHora)}`,
+        appointment.doctorNombre,
+        appointment.procedimientoNombre,
+      ],
+      description: 'La cita cambiará a Cancelada y dejará de contar como atención activa. El registro permanecerá disponible en el historial.',
+      confirmLabel: 'Cancelar cita',
+      appointment,
+    })
+  }
+
+  function requestMarkNoShow(appointment) {
+    openConfirmation({
+      kind: 'mark-no-show',
+      title: 'Registrar inasistencia',
+      subject: appointment.pacienteNombre,
+      details: [
+        `${formatShortDate(appointment.fechaHora)} · ${formatTime(appointment.fechaHora)}`,
+        appointment.procedimientoNombre,
+      ],
+      description: 'La cita cambiará a No asistió. Esta opción identifica que la hora programada pasó sin atención al paciente.',
+      confirmLabel: 'Registrar inasistencia',
+      appointment,
+    })
+  }
+
+  function requestDeletePatient(patient) {
+    openConfirmation({
+      kind: 'delete-patient',
+      title: 'Eliminar paciente',
+      subject: patient.nombreCompleto,
+      details: [patient.documento, patient.email],
+      description: 'Se eliminará el registro del paciente. Esta acción no se puede deshacer y el servidor la rechazará si existen citas o historias relacionadas.',
+      confirmLabel: 'Eliminar paciente',
+      patient,
+    })
+  }
+
+  function applyAppointmentUpdate(updatedAppointment) {
+    const updateCalendarItem = (item) =>
+      item.tipo === 'CITA' && String(item.citaId) === String(updatedAppointment.id)
+        ? { ...item, estado: updatedAppointment.estado }
+        : item
+
+    setData((currentData) => ({
+      ...currentData,
+      appointments: currentData.appointments.map((appointment) =>
+        appointment.id === updatedAppointment.id ? updatedAppointment : appointment),
+      calendarItems: currentData.calendarItems.map(updateCalendarItem),
+      dashboardCalendarItems: currentData.dashboardCalendarItems.map(updateCalendarItem),
+    }))
+    setAppointmentResults((currentResults) => ({
+      ...currentResults,
+      records: currentResults.records.map((appointment) =>
+        appointment.id === updatedAppointment.id ? updatedAppointment : appointment),
+    }))
+  }
+
+  async function confirmDestructiveAction() {
+    if (!confirmation || confirmationBusy) {
       return
     }
 
-    setAttendanceUpdatingId(appointment.id)
-    setAppointmentFeedback(null)
+    setConfirmationBusy(true)
+    setConfirmationError(null)
 
     try {
-      await requestWithAuth(apiBaseUrl, session.token, `/citas/${appointment.id}/inasistencia`, {
-        method: 'PATCH',
-      })
-      await refreshAppointments()
-      await refreshCalendarItems()
-      setAppointmentFeedback({
-        type: 'success',
-        message: 'Inasistencia registrada correctamente.',
-      })
+      if (confirmation.kind === 'delete-patient') {
+        await requestWithAuth(apiBaseUrl, session.token, `/pacientes/${confirmation.patient.id}`, {
+          method: 'DELETE',
+        })
+        setData((currentData) => ({
+          ...currentData,
+          patients: currentData.patients.filter((patient) => patient.id !== confirmation.patient.id),
+        }))
+        setSelectedPatient(null)
+        setPatientFeedback({ type: 'success', message: 'Paciente eliminado correctamente.' })
+      } else {
+        const path = confirmation.kind === 'cancel-appointment'
+          ? `/citas/${confirmation.appointment.id}/cancelar`
+          : `/citas/${confirmation.appointment.id}/inasistencia`
+        const updatedAppointment = await requestWithAuth(apiBaseUrl, session.token, path, {
+          method: 'PATCH',
+        })
+        applyAppointmentUpdate(updatedAppointment)
+        setAppointmentFeedback({
+          type: 'success',
+          message: confirmation.kind === 'cancel-appointment'
+            ? 'Cita cancelada correctamente.'
+            : 'Inasistencia registrada correctamente.',
+        })
+      }
+      setConfirmation(null)
     } catch (error) {
-      setAppointmentFeedback({
-        type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'No fue posible registrar la inasistencia.',
-      })
+      setConfirmationError(
+        error instanceof Error ? error.message : 'No fue posible completar la operación.',
+      )
     } finally {
-      setAttendanceUpdatingId(null)
+      setConfirmationBusy(false)
     }
   }
 
@@ -1836,36 +1893,6 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
       })
     } finally {
       setSavingClinicalRecord(false)
-    }
-  }
-
-  async function handleDeletePatient(patient) {
-    const confirmed = window.confirm(
-      `¿Eliminar a ${patient.nombreCompleto}? Esta acción no se puede deshacer.`,
-    )
-
-    if (!confirmed) {
-      return
-    }
-
-    try {
-      await requestWithAuth(apiBaseUrl, session.token, `/pacientes/${patient.id}`, {
-        method: 'DELETE',
-      })
-      await refreshPatients()
-      setSelectedPatient(null)
-      setPatientFeedback({
-        type: 'success',
-        message: 'Paciente eliminado correctamente.',
-      })
-    } catch (error) {
-      setPatientFeedback({
-        type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'No fue posible eliminar el paciente.',
-      })
     }
   }
 
@@ -2080,7 +2107,11 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
         </section>
 
         {patientFeedback ? (
-          <p className={`dashboard-notice ${patientFeedback.type === 'success' ? 'is-action' : ''}`}>
+          <p
+            className={`dashboard-notice ${patientFeedback.type === 'success' ? 'is-action' : ''}`}
+            role={patientFeedback.type === 'success' ? 'status' : 'alert'}
+            aria-live="polite"
+          >
             {patientFeedback.message}
           </p>
         ) : null}
@@ -2184,7 +2215,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
                             type="button"
                             className="is-danger"
                             aria-label={`Eliminar ${patient.nombreCompleto}`}
-                            onClick={() => handleDeletePatient(patient)}
+                            onClick={() => requestDeletePatient(patient)}
                           >
                             <TrashIcon />
                           </button>
@@ -2430,7 +2461,11 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
         </section>
 
         {appointmentFeedback ? (
-          <p className={`dashboard-notice ${appointmentFeedback.type === 'success' ? 'is-action' : ''}`}>
+          <p
+            className={`dashboard-notice ${appointmentFeedback.type === 'success' ? 'is-action' : ''}`}
+            role={appointmentFeedback.type === 'success' ? 'status' : 'alert'}
+            aria-live="polite"
+          >
             {appointmentFeedback.message}
           </p>
         ) : null}
@@ -2586,8 +2621,8 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
                           title={canMarkNoShow(appointment, currentTime)
                             ? 'Registrar inasistencia'
                             : 'Disponible para citas programadas cuya hora ya pasó'}
-                          disabled={!canMarkNoShow(appointment, currentTime) || attendanceUpdatingId === appointment.id}
-                          onClick={() => handleMarkNoShow(appointment)}
+                          disabled={!canMarkNoShow(appointment, currentTime)}
+                          onClick={() => requestMarkNoShow(appointment)}
                         >
                           <UserXIcon />
                         </button>
@@ -2596,7 +2631,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
                           className="is-danger"
                           aria-label={`Cancelar cita de ${appointment.pacienteNombre}`}
                           disabled={['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado)}
-                          onClick={() => handleCancelAppointment(appointment)}
+                          onClick={() => requestCancelAppointment(appointment)}
                         >
                           <TrashIcon />
                         </button>
@@ -2974,7 +3009,103 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
           <span>Soporte · Privacidad</span>
         </footer>
       </section>
+
+      {confirmation ? (
+        <ConfirmationDialog
+          action={confirmation}
+          busy={confirmationBusy}
+          error={confirmationError}
+          onCancel={closeConfirmation}
+          onConfirm={confirmDestructiveAction}
+        />
+      ) : null}
     </main>
+  )
+}
+
+function ConfirmationDialog({ action, busy, error, onCancel, onConfirm }) {
+  const dialogRef = useRef(null)
+  const cancelButtonRef = useRef(null)
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    const previousFocus = document.activeElement
+    document.body.style.overflow = 'hidden'
+    cancelButtonRef.current?.focus()
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      previousFocus?.focus()
+    }
+  }, [action])
+
+  function handleKeyDown(event) {
+    if (event.key === 'Escape' && !busy) {
+      event.preventDefault()
+      onCancel()
+      return
+    }
+
+    if (event.key === 'Tab') {
+      const buttons = [...(dialogRef.current?.querySelectorAll('button:not(:disabled)') ?? [])]
+      const firstButton = buttons[0]
+      const lastButton = buttons[buttons.length - 1]
+
+      if (event.shiftKey && document.activeElement === firstButton) {
+        event.preventDefault()
+        lastButton?.focus()
+      } else if (!event.shiftKey && document.activeElement === lastButton) {
+        event.preventDefault()
+        firstButton?.focus()
+      }
+    }
+  }
+
+  const warningTone = action.kind === 'mark-no-show'
+
+  return (
+    <div
+      className="confirmation-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !busy) onCancel()
+      }}
+    >
+      <section
+        className={`confirmation-dialog${warningTone ? ' is-warning' : ''}`}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-title"
+        aria-describedby="confirmation-description"
+        aria-busy={busy}
+        ref={dialogRef}
+        onKeyDown={handleKeyDown}
+      >
+        <span className="confirmation-icon"><AlertIcon /></span>
+        <div className="confirmation-copy">
+          <p>Confirmación requerida</p>
+          <h2 id="confirmation-title">{action.title}</h2>
+          <strong>{action.subject}</strong>
+          <ul aria-label="Datos del elemento afectado">
+            {action.details.filter(Boolean).map((detail, index) => <li key={`${detail}-${index}`}>{detail}</li>)}
+          </ul>
+          <p id="confirmation-description">{action.description}</p>
+          {error ? <p className="confirmation-error" role="alert">{error}</p> : null}
+        </div>
+        <div className="confirmation-actions">
+          <button type="button" className="secondary-action" disabled={busy} ref={cancelButtonRef} onClick={onCancel}>
+            Volver sin cambios
+          </button>
+          <button
+            type="button"
+            className={warningTone ? 'warning-action' : 'danger-action'}
+            disabled={busy}
+            onClick={onConfirm}
+          >
+            {busy ? 'Procesando…' : action.confirmLabel}
+          </button>
+        </div>
+      </section>
+    </div>
   )
 }
 
