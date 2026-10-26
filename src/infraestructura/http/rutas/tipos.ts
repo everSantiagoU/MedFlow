@@ -15,6 +15,7 @@ import type { ListarHistoriasClinicas } from '../../../aplicacion/casos-uso/List
 import type { ListarHistoriasPorPaciente } from '../../../aplicacion/casos-uso/ListarHistoriasPorPaciente.js'
 import type { ListarPacientes } from '../../../aplicacion/casos-uso/ListarPacientes.js'
 import type { ListarProcedimientos } from '../../../aplicacion/casos-uso/ListarProcedimientos.js'
+import type { MarcarInasistencia } from '../../../aplicacion/casos-uso/MarcarInasistencia.js'
 import type { ObtenerCita } from '../../../aplicacion/casos-uso/ObtenerCita.js'
 import type { ObtenerDoctor } from '../../../aplicacion/casos-uso/ObtenerDoctor.js'
 import type { ObtenerHistoriaClinica } from '../../../aplicacion/casos-uso/ObtenerHistoriaClinica.js'
@@ -34,7 +35,7 @@ export interface DependenciasHttp {
   listarDoctores: ListarDoctores; obtenerDoctor: ObtenerDoctor; registrarDoctor: RegistrarDoctor; actualizarDoctor: ActualizarDoctor; eliminarDoctor: EliminarDoctor
   listarPacientes: ListarPacientes; obtenerPaciente: ObtenerPaciente; registrarPaciente: RegistrarPaciente; actualizarPaciente: ActualizarPaciente; eliminarPaciente: EliminarPaciente
   listarProcedimientos: ListarProcedimientos; obtenerProcedimiento: ObtenerProcedimiento; registrarProcedimiento: RegistrarProcedimiento; actualizarProcedimiento: ActualizarProcedimiento; eliminarProcedimiento: EliminarProcedimiento
-  listarCitas: ListarCitas; obtenerCita: ObtenerCita; registrarCita: RegistrarCita; actualizarCita: ActualizarCita; cancelarCita: CancelarCita
+  listarCitas: ListarCitas; obtenerCita: ObtenerCita; registrarCita: RegistrarCita; actualizarCita: ActualizarCita; cancelarCita: CancelarCita; marcarInasistencia: MarcarInasistencia
   consultarCalendario: ConsultarCalendario; registrarEventoCalendario: RegistrarEventoCalendario
   listarHistorias: ListarHistoriasClinicas; obtenerHistoria: ObtenerHistoriaClinica; listarHistoriasPorPaciente: ListarHistoriasPorPaciente; registrarHistoria: RegistrarHistoriaClinica; actualizarHistoria: ActualizarHistoriaClinica
 }

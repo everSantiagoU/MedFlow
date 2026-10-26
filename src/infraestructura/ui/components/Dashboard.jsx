@@ -430,6 +430,11 @@ function getStatusClass(status) {
   return 'is-pending'
 }
 
+function canMarkNoShow(appointment, currentTime = new Date()) {
+  const appointmentDate = parseDate(appointment.fechaHora)
+  return Boolean(appointment.estado === 'PROGRAMADA' && appointmentDate && appointmentDate < currentTime)
+}
+
 function getWeekdayIndex(value) {
   const date = parseDate(value)
 
@@ -936,6 +941,10 @@ function getCalendarItemClass(item) {
     return 'is-cancelled'
   }
 
+  if (item.estado === 'NO_ASISTIO') {
+    return 'is-no-show'
+  }
+
   return 'is-scheduled'
 }
 
@@ -1010,6 +1019,8 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
   const [editingAppointment, setEditingAppointment] = useState(null)
   const [appointmentFeedback, setAppointmentFeedback] = useState(null)
   const [savingAppointment, setSavingAppointment] = useState(false)
+  const [attendanceUpdatingId, setAttendanceUpdatingId] = useState(null)
+  const [currentTime, setCurrentTime] = useState(() => new Date())
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [calendarDateTouched, setCalendarDateTouched] = useState(false)
   const [calendarView, setCalendarView] = useState('week')
@@ -1392,6 +1403,11 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setCurrentTime(new Date()), 30_000)
+    return () => window.clearInterval(intervalId)
+  }, [])
+
   function toggleTheme() {
     setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))
   }
@@ -1683,6 +1699,41 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
             ? error.message
             : 'No fue posible cancelar la cita.',
       })
+    }
+  }
+
+  async function handleMarkNoShow(appointment) {
+    const confirmed = window.confirm(
+      `¿Registrar que ${appointment.pacienteNombre} no asistió a la cita de las ${formatTime(appointment.fechaHora)}?`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setAttendanceUpdatingId(appointment.id)
+    setAppointmentFeedback(null)
+
+    try {
+      await requestWithAuth(apiBaseUrl, session.token, `/citas/${appointment.id}/inasistencia`, {
+        method: 'PATCH',
+      })
+      await refreshAppointments()
+      await refreshCalendarItems()
+      setAppointmentFeedback({
+        type: 'success',
+        message: 'Inasistencia registrada correctamente.',
+      })
+    } catch (error) {
+      setAppointmentFeedback({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'No fue posible registrar la inasistencia.',
+      })
+    } finally {
+      setAttendanceUpdatingId(null)
     }
   }
 
@@ -2523,15 +2574,28 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
                         <button
                           type="button"
                           aria-label={`Editar cita de ${appointment.pacienteNombre}`}
+                          disabled={appointment.estado === 'NO_ASISTIO'}
                           onClick={() => openEditAppointmentForm(appointment)}
                         >
                           <EditIcon />
                         </button>
                         <button
                           type="button"
+                          className="is-warning"
+                          aria-label={`Registrar inasistencia de ${appointment.pacienteNombre}`}
+                          title={canMarkNoShow(appointment, currentTime)
+                            ? 'Registrar inasistencia'
+                            : 'Disponible para citas programadas cuya hora ya pasó'}
+                          disabled={!canMarkNoShow(appointment, currentTime) || attendanceUpdatingId === appointment.id}
+                          onClick={() => handleMarkNoShow(appointment)}
+                        >
+                          <UserXIcon />
+                        </button>
+                        <button
+                          type="button"
                           className="is-danger"
                           aria-label={`Cancelar cita de ${appointment.pacienteNombre}`}
-                          disabled={appointment.estado === 'CANCELADA'}
+                          disabled={['CANCELADA', 'NO_ASISTIO'].includes(appointment.estado)}
                           onClick={() => handleCancelAppointment(appointment)}
                         >
                           <TrashIcon />
@@ -2744,7 +2808,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
                                 <small>
                                   {item.tipo === 'EVENTO'
                                     ? item.descripcion || 'Evento del calendario'
-                                    : item.procedimientoNombre}
+                                    : `${item.procedimientoNombre}${item.estado === 'NO_ASISTIO' ? ' · No asistió' : ''}`}
                                 </small>
                               </article>
                             ))}
@@ -2817,6 +2881,7 @@ function Dashboard({ apiBaseUrl, onLogout, session }) {
                 <h2>Leyenda</h2>
                 <span><i className="is-scheduled" /> Cita programada</span>
                 <span><i className="is-completed" /> Cita completada</span>
+                <span><i className="is-no-show" /> No asistió</span>
                 <span><i className="is-event" /> Evento</span>
                 <span><i className="is-cancelled" /> Cancelada</span>
               </section>
@@ -3081,7 +3146,6 @@ function AppointmentForm({
             <option value="PROGRAMADA">Programada</option>
             <option value="COMPLETADA">Completada</option>
             <option value="CANCELADA">Cancelada</option>
-            <option value="NO_ASISTIO">No asistió</option>
           </select>
         </label>
       </div>
@@ -3551,6 +3615,16 @@ function UsersIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M8.8 11.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Zm6.4 1.2a2.7 2.7 0 1 0 0-5.4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
       <path d="M3.8 19c.5-3.2 2.2-5 5-5s4.5 1.8 5 5m1.1-4.8c2.4.3 3.9 1.9 4.3 4.8" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
+    </svg>
+  )
+}
+
+function UserXIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7">
+      <path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <path d="m17 8 5 5m0-5-5 5" />
     </svg>
   )
 }
