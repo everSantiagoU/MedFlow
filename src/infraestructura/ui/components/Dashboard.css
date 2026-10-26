@@ -3151,3 +3151,228 @@
 .appointment-filter-actions p { margin: 0; }
 .appointment-field select { min-width: 0; width: 100%; }
 .appointment-filter-actions button:disabled { opacity: 0.5; cursor: default; }
+
+.confirmation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(6px);
+  animation: confirmation-fade-in 0.16s ease-out;
+}
+
+.confirmation-dialog {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 18px;
+  width: min(100%, 540px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 26px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+  animation: confirmation-dialog-in 0.2s ease-out;
+}
+
+.confirmation-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fff1ef;
+  color: #cf3f35;
+}
+
+.confirmation-dialog.is-warning .confirmation-icon {
+  background: #fff8e8;
+  color: #a46700;
+}
+
+.confirmation-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.confirmation-copy > p:first-child {
+  margin: 0 0 4px;
+  color: #c43c31;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.confirmation-dialog.is-warning .confirmation-copy > p:first-child {
+  color: #895900;
+}
+
+.confirmation-copy h2 {
+  margin: 0;
+  color: #17202c;
+  font-size: 1.3rem;
+}
+
+.confirmation-copy > strong {
+  display: block;
+  margin-top: 12px;
+  color: #1d2430;
+  font-size: 1rem;
+}
+
+.confirmation-copy ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.confirmation-copy li {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #566276;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+#confirmation-description {
+  margin: 16px 0 0;
+  color: #566276;
+  line-height: 1.55;
+}
+
+.confirmation-error {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #f2c6c0;
+  border-radius: 8px;
+  background: #fff4f2;
+  color: #a92f27;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.confirmation-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 20px;
+  border-top: 1px solid #e8eef5;
+}
+
+.danger-action,
+.warning-action {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.danger-action {
+  background: #d44237;
+}
+
+.danger-action:hover:not(:disabled) {
+  background: #bd352c;
+}
+
+.warning-action {
+  background: #b87300;
+}
+
+.warning-action:hover:not(:disabled) {
+  background: #995f00;
+}
+
+.danger-action:disabled,
+.warning-action:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.dashboard-shell.is-dark .confirmation-dialog {
+  border-color: #2b3a50;
+  background: #111a29;
+}
+
+.dashboard-shell.is-dark .confirmation-copy h2,
+.dashboard-shell.is-dark .confirmation-copy > strong {
+  color: #f2f6fc;
+}
+
+.dashboard-shell.is-dark #confirmation-description {
+  color: #aab6c8;
+}
+
+.dashboard-shell.is-dark .confirmation-copy li {
+  background: #17263a;
+  color: #b9c5d8;
+}
+
+.dashboard-shell.is-dark .confirmation-actions {
+  border-color: #263449;
+}
+
+.dashboard-shell.is-dark .confirmation-error {
+  border-color: #6b332e;
+  background: #321d20;
+  color: #ffaaa3;
+}
+
+@keyframes confirmation-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes confirmation-dialog-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+  .confirmation-backdrop {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .confirmation-dialog {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 14px;
+    max-height: calc(100vh - 24px);
+    padding: 22px 18px 18px;
+  }
+
+  .confirmation-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .confirmation-actions {
+    flex-direction: column;
+  }
+
+  .confirmation-actions button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirmation-backdrop,
+  .confirmation-dialog {
+    animation: none;
+  }
+}
