@@ -8,7 +8,7 @@ import type { ClientePrisma } from './prisma.js'
 const relaciones = { paciente: true, doctor: true, procedimiento: true } as const
 
 export class CitaDAOPrisma implements CitaDAO {
-  constructor(private readonly prisma: Pick<ClientePrisma, 'cita'>) {}
+  constructor(private readonly prisma: ClientePrisma) {}
 
   async porId(id: number) {
     const fila = await this.prisma.cita.findUnique({ where: { id }, include: relaciones })

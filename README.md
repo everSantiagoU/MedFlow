@@ -145,15 +145,15 @@ npm run check
 
 `dist/backend` contiene la compilacion Node y `dist/frontend` la compilacion Vite. Ambos directorios, igual que `node_modules`, `coverage`, `.env` y el cliente generado de Prisma, estan excluidos de Git.
 
-Las pruebas unitarias de Doctor y Paciente usan DAO en memoria independientes. Las pruebas HTTP verifican JWT, CRUD, normalizacion, duplicados y errores. El contrato de citas cubre filtros individuales, combinados, validaciones y autenticacion. `npm test` omite las pruebas MySQL por defecto.
+Las pruebas unitarias de Doctor y Paciente usan DAO en memoria independientes. Las pruebas HTTP verifican JWT, CRUD, normalizacion, duplicados y errores. `npm test` omite la prueba MySQL por defecto.
 
-Para verificar los adaptadores y los filtros de citas sobre un clon existente, con las credenciales locales configuradas en `.env`:
+Para verificar ambos adaptadores sobre un clon existente, con las credenciales locales configuradas en `.env`:
 
 ```bash
-DATABASE_NAME=clinica_db_node_test npm run test:db
+ENTIDADES_MYSQL_TEST=true DATABASE_NAME=clinica_db_node_test node --env-file=.env node_modules/vitest/vitest.mjs run tests/contrato/DoctorPacientePrisma.test.ts
 ```
 
-Las pruebas exigen una base `clinica_db_node_test` o `clinica_db_java_test` y revierten los registros creados mediante transacciones. Comprueban relaciones, filtros individuales, combinaciones y orden cronologico sin modificar el esquema. Los contadores autoincrementales del clon pueden avanzar aunque los registros se reviertan.
+La prueba exige una base `clinica_db_node_test` o `clinica_db_java_test` y revierte los registros creados mediante una transaccion. No modifica el esquema. Los contadores autoincrementales del clon pueden avanzar aunque los registros se reviertan.
 
 ## Credenciales de demostracion
 
