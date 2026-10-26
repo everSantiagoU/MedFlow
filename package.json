@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:backend": "vitest run",
+    "test:db": "ENTIDADES_MYSQL_TEST=true CITAS_MYSQL_TEST=true node --env-file=.env node_modules/vitest/vitest.mjs run tests/contrato/DoctorPacientePrisma.test.ts tests/contrato/FiltrosCitasPrisma.test.ts",
     "test:watch": "vitest",
     "cov": "vitest run --coverage",
     "db:pull": "prisma db pull && prisma generate",
