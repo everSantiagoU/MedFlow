@@ -83,8 +83,8 @@ const procedimientos: Modulo = {
 }
 const citas: Modulo = {
   tag: 'Citas', entidad: 'Cita', singular: 'cita', relaciones: true,
-  crear: 'Requiere paciente, doctor y procedimiento existentes, y fecha futura. El estado omitido, nulo o vacío se convierte en PROGRAMADA. Se rechaza otra cita que no esté cancelada ni marcada NO_ASISTIO del mismo doctor o paciente con exactamente la misma fecha y hora. Esta operación no verifica solapamientos por duración ni eventos del calendario.',
-  conflicto: 'Estado no permitido o cita existente del mismo doctor o paciente a la misma fecha y hora.',
+  crear: 'Requiere paciente, doctor y procedimiento existentes, y fecha futura. El estado omitido, nulo o vacío se convierte en PROGRAMADA. NO_ASISTIO no puede asignarse al crear o editar: debe registrarse mediante PATCH /citas/{id}/inasistencia cuando la hora ya pasó. Se rechaza otra cita que no esté cancelada ni marcada NO_ASISTIO del mismo doctor o paciente con exactamente la misma fecha y hora. Esta operación no verifica solapamientos por duración ni eventos del calendario.',
+  conflicto: 'Estado no permitido, intento de asignar NO_ASISTIO directamente o cita existente del mismo doctor o paciente a la misma fecha y hora.',
   listado: 'Lista citas por fecha y hora ascendente, incluyendo canceladas, sin paginación. El filtro fecha selecciona un día local completo; si se omite devuelve todas.',
 }
 const historias: Modulo = {
@@ -123,7 +123,7 @@ export const openapi = {
 - Fechas y horas locales en **YYYY-MM-DDTHH:mm:ss**, con fracción opcional de hasta seis dígitos, **sin Z ni zona horaria**. La validación de fechas futuras usa la hora local del servidor.
 - Los listados son arreglos sin paginación; si no hay resultados devuelven **[]**.
 - **PUT** exige todos los campos obligatorios del esquema de solicitud. Los IDs de respuesta son generados por el servidor.
-- Citas e historias no tienen endpoint DELETE. Para cancelar una cita se usa **PATCH /citas/{id}/cancelar**, sin cuerpo.
+- Citas e historias no tienen endpoint DELETE. Para cancelar una cita se usa **PATCH /citas/{id}/cancelar**. Para registrar una inasistencia se usa **PATCH /citas/{id}/inasistencia**; sólo acepta citas PROGRAMADA cuya hora ya pasó. Ambas operaciones se envían sin cuerpo.
 - Salud, login y documentación son públicos. Los endpoints de negocio requieren JWT; actualmente no aplican permisos diferenciados por rol.
 - Los errores usan **{ mensaje, errores }**: 400 indica validación; 401, autenticación; 404, recurso inexistente; 409, conflicto de negocio; 500, error interno.
 
@@ -171,6 +171,17 @@ La especificación completa está disponible en [OpenAPI JSON](/api/v1/openapi.j
       tags: ['Citas'], operationId: 'cancelarCita', summary: 'Cancelar cita',
       description: 'Cambia el estado a CANCELADA y conserva el registro. No requiere cuerpo ni fecha futura. Repetir la operación mantiene el estado cancelado.',
       responses: { 200: respuesta('Cita cancelada.', referencia('Cita')), 400: invalido, 404: noEncontrado, ...erroresComunes },
+    } },
+    '/citas/{id}/inasistencia': { parameters: [parametroId()], patch: {
+      tags: ['Citas'], operationId: 'marcarInasistencia', summary: 'Registrar inasistencia',
+      description: 'Cambia el estado a NO_ASISTIO únicamente si la cita está PROGRAMADA y su fecha y hora local son anteriores al momento actual. No requiere cuerpo.',
+      responses: {
+        200: respuesta('Inasistencia registrada.', referencia('Cita')),
+        400: invalido,
+        404: noEncontrado,
+        409: error('La cita no está programada o su hora todavía no ha pasado.'),
+        ...erroresComunes,
+      },
     } },
     '/calendario': { get: {
       tags: ['Calendario'], operationId: 'consultarCalendario', summary: 'Consultar agenda de un doctor por rango',

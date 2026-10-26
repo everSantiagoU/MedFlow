@@ -65,9 +65,19 @@ describe.skipIf(process.env['CITAS_MYSQL_TEST'] !== 'true')('Filtros de citas en
           expect(encontradas).toEqual(esperadas)
         }
 
+        const idInasistencia = [...etiquetasPorId.entries()]
+          .find(([, etiqueta]) => etiqueta === 'uno-programada-dia')?.[0]
+        expect(idInasistencia).toBeDefined()
+        const actualizada = await dao.actualizarEstado(idInasistencia!, 'NO_ASISTIO')
+        expect(actualizada.estado).toBe('NO_ASISTIO')
+        const inasistencias = (await dao.listarPorFecha('2098-05-12', { estado: 'NO_ASISTIO' }))
+          .filter(cita => etiquetasPorId.has(cita.id))
+          .map(cita => etiquetasPorId.get(cita.id))
+        expect(inasistencias).toEqual(['uno-programada-dia'])
+
         const [citaConRelaciones] = await dao.listarPorFecha('2098-05-12', {
           doctorId: doctorUno.id,
-          estado: 'PROGRAMADA',
+          estado: 'NO_ASISTIO',
         })
         expect(citaConRelaciones).toMatchObject({
           doctor: { id: doctorUno.id, nombreCompleto: doctorUno.nombreCompleto },

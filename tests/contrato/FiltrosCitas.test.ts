@@ -8,8 +8,11 @@ import type { ClientePrisma } from '../../src/infraestructura/persistencia/prism
 describe('ACT-019: filtros de citas', () => {
   let app: ReturnType<typeof crearServidor>
   let token: string
+  let almacenes: Awaited<ReturnType<typeof armarAplicacion>>['almacenes']
   beforeEach(async () => {
-    const { deps, almacenes } = await armarAplicacion()
+    const armado = await armarAplicacion()
+    const { deps } = armado
+    almacenes = armado.almacenes
     await almacenes.doctores.guardar({ nombreCompleto: 'Dr. Segundo', especialidad: 'General', registroMedico: 'RM-2', email: 'segundo@example.com' })
     for (const [doctorId, estado, fecha] of [
       [1, 'PROGRAMADA', '2030-05-12T00:00:00'],
@@ -45,12 +48,13 @@ describe('ACT-019: filtros de citas', () => {
     expect(res.body.errores.length).toBeGreaterThan(0)
   })
 
-  it('permite filtrar el estado NO_ASISTIO incorporado en main', async () => {
-    const creado = await request(app).post('/api/v1/citas').set('Authorization', 'Bearer ' + token).send({
-      pacienteId: 1, doctorId: 1, procedimientoId: 1, fechaHora: '2035-06-01T10:00:00', estado: 'NO_ASISTIO',
-    }).expect(201)
-    const res = await request(app).get('/api/v1/citas?doctorId=1&fecha=2035-06-01&estado=NO_ASISTIO').set('Authorization', 'Bearer ' + token).expect(200)
-    expect(res.body.map((c: { id: number }) => c.id)).toEqual([creado.body.id])
+  it('permite filtrar el estado NO_ASISTIO registrado por la transición dedicada', async () => {
+    const creada = await almacenes.citas.guardar({
+      pacienteId: 1, doctorId: 1, procedimientoId: 1, fechaHora: new Date('2020-06-01T10:00:00Z'), estado: 'PROGRAMADA',
+    })
+    await request(app).patch(`/api/v1/citas/${creada.id}/inasistencia`).set('Authorization', 'Bearer ' + token).expect(200)
+    const res = await request(app).get('/api/v1/citas?doctorId=1&fecha=2020-06-01&estado=NO_ASISTIO').set('Authorization', 'Bearer ' + token).expect(200)
+    expect(res.body.map((c: { id: number }) => c.id)).toEqual([creada.id])
   })
 
   it('mantiene la autenticación para consultas filtradas', async () => {
